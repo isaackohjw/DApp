@@ -148,10 +148,10 @@ export default function LoginPage() {
               {walletAddress ? "Wallet Connected" : "Connect Wallet"}
 
               <Image
-                src="/MetaMask_Fox.webp" // Path to the MetaMask logo
+                src="/MetaMask_Fox.webp"
                 alt="MetaMask Logo"
-                width={28} // Set the desired width
-                height={28} // Set the desired height
+                width={28}
+                height={28}
                 className="ml-2"
               />
             </button>
