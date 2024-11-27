@@ -11,7 +11,7 @@ export default function OrganisationBox({
   tokens: string[];
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-md p-4 w-80 mt-6">
+    <div className="bg-gray-700 rounded-lg shadow-md p-4 w-80 mt-2 cursor-pointer hover:bg-gray-800 hover:scale-105 transition-all duration-300">
       {/* Profile Picture and Organization Name */}
       <div className="flex items-center mb-4">
         <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
@@ -40,7 +40,11 @@ export default function OrganisationBox({
           roles.map((role, index) => (
             <div
               key={index}
-              className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg"
+              className={`
+                px-3 py-1 text-white text-sm rounded-lg
+                ${role === "Proposer" ? "bg-purple-900" : ""}
+                ${role === "Voter" ? "bg-blue-900" : ""}
+              `}
             >
               {role}
             </div>
@@ -54,8 +58,8 @@ export default function OrganisationBox({
       <hr className="border-gray-300 mb-4" />
 
       {/* Tokens */}
-      <div className="text-gray-600 flex justify-center items-center">
-        <span className="text-sm">{tokens.join(", ")}</span>
+      <div className="text-white flex justify-center items-center">
+        <span className="text-xs">{tokens.join(", ")}</span>
       </div>
     </div>
   );
