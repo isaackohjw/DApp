@@ -1,7 +1,6 @@
 import React from "react";
 import { Titlebar } from "@/components/titlebar";
 import OrganisationBox from "@/components/organisation_box";
-import Image from "next/image";
 
 export default function OrganisationPage() {
   return (

@@ -7,10 +7,8 @@ import Image from "next/image";
 
 export default function LoginPage() {
   const [walletAddress, setWalletAddress] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
+  const [error, setError] = useState("");
   // const provider = new ethers.BrowserProvider(window.ethereum);
 
   // Code using MetaMask
@@ -81,106 +79,53 @@ export default function LoginPage() {
 
   // ----------------------- Hard Coded -----------------------
 
-  // Hardcoded wallet address and password for testing
+  // Hardcoded wallet address for testing
   const dummyWalletAddress = "0xYourDummyWalletAddressHere";
-  const dummyPassword = "123456";
 
-  // Simulate the connection to the wallet (hardcode)
+  // Simulate the connection to the wallet
   const connectWallet = () => {
     setWalletAddress(dummyWalletAddress);
     setIsClicked(true);
-  };
 
-  const handleLogin = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError("");
-    setIsLoading(true);
-
-    if (!walletAddress || !password) {
-      setError("Please connect your wallet and enter a password");
-      setIsLoading(false);
-      return;
-    }
-
-    // Simulate signing process with a dummy signature (no MetaMask needed)
-    try {
-      const message = `Sign in to MyApp at ${new Date().toISOString()}`;
-      const signature = ethers.hashMessage(message);
-
-      // Simulate a backend request for login verification
-      if (
-        walletAddress.toLowerCase() === dummyWalletAddress.toLowerCase() &&
-        password === dummyPassword
-      ) {
-        const response = { name: "John Doe" };
-        alert(`Welcome, ${response.name}!`);
-      } else {
-        setError("Invalid credentials");
-      }
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message || "Login failed");
-      } else {
-        setError("An unknown error occurred");
-      }
-    } finally {
-      setIsLoading(false);
+    if (dummyWalletAddress.toLowerCase() === walletAddress.toLowerCase()) {
+      alert("Welcome to the Voting Application!");
+    } else {
+      setError("Failed to connect. Please try again.");
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen flex-col">
-      <div className="text-center mb-16">
-        <span className="text-4xl rainbow-text font-title">
+    <div className="flex flex-col items-center justify-center min-h-screen text-white">
+      <div className="text-center mb-4">
+        <h1 className="text-5xl font-title rainbow-text mb-2 leading-normal">
           Voting Application
-        </span>
+        </h1>
+        <p className="mt-4 text-xl text-gray-400 font-title mb-20">
+          Secure. Transparent. Decentralised.
+        </p>
+        <p className="mt-2 text-sm text-gray-300">
+          Connect your wallet to sign in.
+        </p>
       </div>
-      <div className="bg-gray-800 p-6 rounded-lg shadow-md w-full max-w-sm">
+      {/* Wallet connection button */}
+      <div className="text-center">
         {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
-        <form onSubmit={handleLogin}>
-          <div className="mb-4">
-            <button
-              type="button"
-              className={`w-full py-2 px-4 rounded flex items-center justify-center text-white transition-colors duration-400 
-        ${isClicked ? "bg-yellow-700" : "bg-yellow-500 hover:bg-yellow-600"}`}
-              onClick={connectWallet}
-            >
-              {walletAddress ? "Wallet Connected" : "Connect Wallet"}
-
-              <Image
-                src="/MetaMask_Fox.webp"
-                alt="MetaMask Logo"
-                width={28}
-                height={28}
-                className="ml-2"
-              />
-            </button>
-          </div>
-          <div className="mb-4">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-500"
-            >
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 p-2 w-full border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700"
-              placeholder="Enter your Password"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-700 disabled:opacity-50"
-          >
-            {isLoading ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
+        <button
+          type="button"
+          className={`py-3 px-6 rounded-lg flex items-center justify-center text-white transition-colors duration-300 ${
+            isClicked ? "bg-yellow-700" : "bg-yellow-500 hover:bg-yellow-600"
+          }`}
+          onClick={connectWallet}
+        >
+          {walletAddress ? "Wallet Connected" : "Connect Wallet"}
+          <img
+            src="/MetaMask_Fox.webp"
+            alt="MetaMask Logo"
+            width={28}
+            height={28}
+            className="ml-2"
+          />
+        </button>
       </div>
     </div>
   );
