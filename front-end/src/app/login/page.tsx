@@ -95,7 +95,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen text-white">
+    <div className="flex flex-col items-center justify-center min-h-screen text-white font-body">
       <div className="text-center mb-4">
         <h1 className="text-5xl font-title rainbow-text mb-2 leading-normal">
           Voting Application

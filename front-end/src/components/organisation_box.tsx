@@ -1,66 +1,65 @@
 "use client";
-export default function OrganisationBox({
-  name = "Organization Name",
-  profilePic,
-  roles = [],
-  tokens = ["5 ETH"],
-}: {
+
+import React from "react";
+
+// Define prop types for OrganisationBox
+interface OrganisationBoxProps {
   name: string;
-  profilePic: string | null;
-  roles: string[];
-  tokens: string[];
-}) {
+  profilePic: string;
+  role: "Owner" | "Admin" | "Voter";
+  token: string;
+  description: string;
+}
+
+// Role color mapping
+const roleColors: { [key in "Owner" | "Admin" | "Voter"]: string } = {
+  Owner: "bg-green-600",
+  Admin: "bg-blue-600",
+  Voter: "bg-orange-600",
+};
+
+// OrganisationBox component to display details of an organization
+export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
+  name,
+  profilePic,
+  role,
+  token,
+  description,
+}) => {
   return (
-    <div className="bg-gray-700 rounded-lg shadow-md p-4 w-80 mt-2 cursor-pointer hover:bg-gray-800 hover:scale-105 transition-all duration-300">
-      {/* Profile Picture and Organization Name */}
-      <div className="flex items-center mb-4">
-        <div className="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
-          {profilePic ? (
-            <img
-              src={profilePic}
-              alt={`${name} Profile`}
-              className="w-full h-full object-cover"
-              onError={(e) => (e.currentTarget.style.display = "none")}
-            />
-          ) : (
-            <div className="bg-gray-400 w-full h-full flex items-center justify-center text-gray-800">
-              ?
-            </div>
-          )}
+    <div className="max-w-xs rounded-lg shadow-md bg-gray-800 text-white p-4 w-full font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
+      {/* Organization Image */}
+      <div className="flex justify-center mb-2">
+        <img
+          src={profilePic}
+          alt={`${name} Logo`}
+          className="w-full h-32 object-cover rounded-md"
+        />
+      </div>
+
+      {/* Organization Name */}
+      <h2 className="text-lg font-bold text-center mb-2">{name}</h2>
+
+      {/* Organization Description */}
+      <p className="text-center mb-4 text-xs text-gray-400 line-clamp-2">
+        {description}
+      </p>
+
+      {/* Organization Role */}
+      <div className="flex justify-center mb-2">
+        <button
+          className={`py-2 px-6 rounded-lg text-white ${roleColors[role]} hover:bg-opacity-80 text-sm`}
+        >
+          {role}
+        </button>
+      </div>
+
+      {/* Token Used + Amount */}
+      <div className="flex justify-center mb-2">
+        <div className="bg-gray-700 bg-opacity-80 text-white rounded-full px-6 py-2 text-xs font-semibold border-2 border-gray-500 transform transform transition-all duration-300 hover:bg-gray-400 hover:scale-105">
+          {token}
         </div>
-        <span className="ml-4 text-lg font-semibold truncate">{name}</span>
-      </div>
-
-      {/* Separator */}
-      <hr className="border-gray-300 mb-4" />
-
-      {/* Roles */}
-      <div className="flex justify-center gap-2 mb-4">
-        {roles.length > 0 ? (
-          roles.map((role, index) => (
-            <div
-              key={index}
-              className={`
-                px-3 py-1 text-white text-sm rounded-lg
-                ${role === "Proposer" ? "bg-purple-900" : ""}
-                ${role === "Voter" ? "bg-blue-900" : ""}
-              `}
-            >
-              {role}
-            </div>
-          ))
-        ) : (
-          <span className="text-gray-500 text-sm">No roles assigned</span>
-        )}
-      </div>
-
-      {/* Separator */}
-      <hr className="border-gray-300 mb-4" />
-
-      {/* Tokens */}
-      <div className="text-white flex justify-center items-center">
-        <span className="text-xs">{tokens.join(", ")}</span>
       </div>
     </div>
   );
-}
+};

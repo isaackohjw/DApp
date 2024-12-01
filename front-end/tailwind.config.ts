@@ -14,7 +14,7 @@ export default {
       },
       fontFamily: {
         title: ["Montserrat", "sans-serif"],
-        body: ["Varta", "sans-serif"],
+        body: ["Barlow", "sans-serif"],
       },
     },
   },
