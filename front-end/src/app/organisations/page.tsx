@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Titlebar } from "@/components/titlebar";
 import { OrganisationBox } from "@/components/organisation_box";
+import { AddOrganisation } from "@/components/add_organisation"; // Import the modal component
 
 // Simulated API Data (default values)
 const defaultData = {
@@ -16,6 +17,7 @@ const defaultData = {
 
 export default function OrganisationPage() {
   const [orgData, setOrgData] = useState(defaultData);
+  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal visibility
 
   // Simulating an API call to fetch organization data
   useEffect(() => {
@@ -26,8 +28,20 @@ export default function OrganisationPage() {
     fetchOrgData();
   }, []);
 
+  const handleAddOrganisation = (data: {
+    name: string;
+    description: string;
+    image: string;
+    tokenAddress: string;
+    adminWallets: string[]; // Change to an array
+  }) => {
+    console.log("New Organisation Created:", data);
+    // Here, you can handle the new organisation data (e.g., update state or make an API call)
+    setIsModalOpen(false); // Close the modal after adding
+  };
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen relative">
       {/* Titlebar */}
       <Titlebar name="John Doe" initial="J" />
 
@@ -69,8 +83,11 @@ export default function OrganisationPage() {
       <div className="fixed bottom-6 right-6">
         <div className="group relative">
           {/* Plus Icon */}
-          <button className="bg-gray-500 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300">
-            <span className="text-3xl font-bold">+</span>
+          <button
+            onClick={() => setIsModalOpen(true)} // Open the modal
+            className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300"
+          >
+            <span className="text-3xl font-thin">+</span>
           </button>
 
           {/* Tooltip */}
@@ -81,6 +98,14 @@ export default function OrganisationPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Organisation Modal */}
+      {isModalOpen && (
+        <AddOrganisation
+          onClose={() => setIsModalOpen(false)} // Close the modal
+          onCreate={handleAddOrganisation} // Handle the new organisation creation
+        />
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
   description,
 }) => {
   return (
-    <div className="max-w-xs rounded-lg shadow-md bg-gray-800 text-white p-4 w-full font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
+    <div className="w-80 rounded-lg shadow-md bg-gray-800 text-white p-4 w-full font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
       {/* Organization Image */}
       <div className="flex justify-center mb-2">
         <img
@@ -48,7 +48,7 @@ export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
       {/* Organization Role */}
       <div className="flex justify-center mb-2">
         <button
-          className={`py-2 px-6 rounded-lg text-white ${roleColors[role]} hover:bg-opacity-80 text-sm`}
+          className={`py-1 px-2 rounded-lg text-white ${roleColors[role]} hover:bg-opacity-80 text-sm`}
         >
           {role}
         </button>
@@ -56,7 +56,7 @@ export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
 
       {/* Token Used + Amount */}
       <div className="flex justify-center mb-2">
-        <div className="bg-gray-700 bg-opacity-80 text-white rounded-full px-6 py-2 text-xs font-semibold border-2 border-gray-500 transform transform transition-all duration-300 hover:bg-gray-400 hover:scale-105">
+        <div className="bg-gray-700 bg-opacity-80 text-white rounded-full px-3 py-1 text-xs font-semibold border-2 border-gray-500 transform transform transition-all duration-300 hover:bg-gray-400 hover:scale-105">
           {token}
         </div>
       </div>
