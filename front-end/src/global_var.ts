@@ -33,6 +33,9 @@ export interface VotingInstance {
   votedAbstain: number;
   createdAt: string;
   closedAt: string;
+  timeLeft: string;
+  hasVoted: boolean;
+  createdByUser: boolean;
 }
 
 // For global variables, you can add any constants you want to use across your app

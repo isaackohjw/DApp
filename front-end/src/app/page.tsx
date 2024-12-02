@@ -9,9 +9,7 @@ import { ConfirmationModal } from "@/components/confirmation_modal";
 import { Role, VotingInstance, VotingStatus } from "@/global_var";
 import { Tabs } from "@/components/dashboard_taskbar";
 import { Titlebar } from "@/components/titlebar";
-import { AdminList } from "@/components/admin_list";
-import { AddAdminInput } from "@/components/admin_input";
-import { ConfirmationModalAd } from "@/components/admin_confirmation_modal";
+import VotingModal from "@/components/voting_modal";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("currentVoting");
@@ -22,10 +20,10 @@ export default function Dashboard() {
     "admin1@example.com",
     "admin2@example.com",
     "admin3@example.com",
-  ]); // Example admin list
-  const [newAdmin, setNewAdmin] = useState<string>(""); // New admin input field
-  const [confirmAction, setConfirmAction] = useState<string | null>(null); // To track which confirmation action to show
-  const [adminToRemove, setAdminToRemove] = useState<string | null>(null); // Admin to be removed
+  ]);
+  const [newAdmin, setNewAdmin] = useState<string>("");
+  const [confirmAction, setConfirmAction] = useState<string | null>(null);
+  const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
 
   // Simulated data
   const userRole: Role = "Owner"; // Can be "Voter", "Admin", or "Owner"
@@ -84,28 +82,28 @@ export default function Dashboard() {
   };
 
   const handleCancel = () => {
-    setIsConfirmModalOpen(false); // Close modal after cancellation
+    setIsConfirmModalOpen(false);
   };
 
   const handleAddAdmins = () => {
     if (newAdmin) {
-      setAdminList((prevAdminList) => [...prevAdminList, newAdmin]); // Add one new admin to the list
-      setNewAdmin(""); // Clear input field after adding
+      setAdminList((prevAdminList) => [...prevAdminList, newAdmin]);
+      setNewAdmin("");
     }
   };
 
   const handleRemoveAdmin = (admin: string) => {
     setAdminToRemove(admin);
     setConfirmAction("remove");
-    setIsConfirmModalOpen(true); // Show confirmation modal before removing admin
+    setIsConfirmModalOpen(true);
   };
 
   const confirmRemoveAdmin = () => {
     setAdminList((prevAdminList) =>
       prevAdminList.filter((admin) => admin !== adminToRemove)
-    ); // Remove admin from the list
-    setAdminToRemove(null); // Clear the selected admin
-    setIsConfirmModalOpen(false); // Close modal
+    );
+    setAdminToRemove(null);
+    setIsConfirmModalOpen(false);
   };
 
   // Tabs data
@@ -225,9 +223,35 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Plus Button for Adding Voting Instance */}
+      <div className="fixed bottom-6 right-6">
+        <div className="group relative">
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className={`bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300 ${
+              userRole === "Voter" ? "hidden" : ""
+            }`}
+          >
+            <span className="text-3xl font-thin">+</span>
+          </button>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="flex justify-center items-center text-white text-center text-xs font-normal px-3 py-1 rounded-full font-body shadow-lg">
+              Add Voting Instance
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Modals */}
       {isAddModalOpen && (
-        <AddVotingInstanceModal onClose={() => setIsAddModalOpen(false)} />
+        <AddVotingInstanceModal
+          onClose={() => setIsAddModalOpen(false)}
+          onCreate={(data) => {
+            console.log("Created Voting Instance:", data);
+            // Add logic to handle the creation of the voting instance
+            setIsAddModalOpen(false); // Close modal after creation
+          }}
+        />
       )}
 
       {isAdminModalOpen && (
