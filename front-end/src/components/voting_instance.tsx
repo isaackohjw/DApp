@@ -22,7 +22,7 @@ export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
   } = instance;
 
   return (
-    <div className="bg-gray-800 text-white p-2 pl-3 rounded-md shadow-md mb-6 border border-gray-700 relative w-52">
+    <div className="bg-gray-800 text-white p-2 pl-3 rounded-md shadow-md mb-6 border border-gray-700 relative w-52 hover:bg-gray-700 hover:scale-105 transform transition-all duration-300">
       {/* Title */}
       <h3
         className="text-lg font-bold text-white mb-4 text-center leading-tight line-clamp-2"

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Titlebar } from "@/components/titlebar";
 import { OrganisationBox } from "@/components/organisation_box";
-import { AddOrganisation } from "@/components/add_organisation"; 
+import { AddOrganisation } from "@/components/add_organisation";
 
 // Simulated API Data (default values)
 const defaultData = {
@@ -17,7 +17,7 @@ const defaultData = {
 
 export default function OrganisationPage() {
   const [orgData, setOrgData] = useState(defaultData);
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Simulating an API call to fetch organization data
   useEffect(() => {
@@ -33,11 +33,11 @@ export default function OrganisationPage() {
     description: string;
     image: string;
     tokenAddress: string;
-    adminWallets: string[]; 
+    adminWallets: string[];
   }) => {
     console.log("New Organisation Created:", data);
     // Here, you can handle the new organisation data (e.g., update state or make an API call)
-    setIsModalOpen(false); 
+    setIsModalOpen(false);
   };
 
   return (
@@ -84,7 +84,7 @@ export default function OrganisationPage() {
         <div className="group relative">
           {/* Plus Icon */}
           <button
-            onClick={() => setIsModalOpen(true)} 
+            onClick={() => setIsModalOpen(true)}
             className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300"
           >
             <span className="text-3xl font-thin">+</span>
@@ -102,8 +102,8 @@ export default function OrganisationPage() {
       {/* Add Organisation Modal */}
       {isModalOpen && (
         <AddOrganisation
-          onClose={() => setIsModalOpen(false)} 
-          onCreate={handleAddOrganisation} 
+          onClose={() => setIsModalOpen(false)}
+          onCreate={handleAddOrganisation}
         />
       )}
     </div>

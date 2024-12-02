@@ -6,7 +6,7 @@ import { VotingResultsCard } from "@/components/voting_results";
 import { AddVotingInstanceModal } from "@/components/add_voting";
 import { AddRemoveAdminModal } from "@/components/manage_admin";
 import { ConfirmationModal } from "@/components/confirmation_modal";
-import { Role } from "@/global_var";
+import { Role, VotingInstance, VotingStatus } from "@/global_var";
 import { Tabs } from "@/components/dashboard_taskbar";
 import { Titlebar } from "@/components/titlebar";
 
@@ -24,26 +24,44 @@ export default function Dashboard() {
     {
       id: 1,
       title: "Election 2024",
-      status: "Open",
+      status: VotingStatus.OPEN,
+      totalVoters: 500,
+      votedYes: 300,
+      votedNo: 120,
+      votedAbstain: 50,
       createdAt: "2024-12-01",
+      closedAt: "2024-12-02",
       timeLeft: "2d 3h 15m",
       hasVoted: true,
+      createdByUser: true,
     },
     {
       id: 2,
       title: "Company Annual Vote",
-      status: "Closed",
+      status: VotingStatus.CLOSED,
+      totalVoters: 300,
+      votedYes: 89,
+      votedNo: 150,
+      votedAbstain: 50,
       createdAt: "2024-11-20",
+      closedAt: "2024-11-21",
       timeLeft: "0d 0h 0m",
       hasVoted: false,
+      createdByUser: false,
     },
     {
       id: 3,
       title: "Community Fund Allocation",
-      status: "Suspended",
+      status: VotingStatus.SUSPENDED,
+      totalVoters: 400,
+      votedYes: 8,
+      votedNo: 100,
+      votedAbstain: 50,
       createdAt: "2024-11-25",
+      closedAt: "2024-11-26",
       timeLeft: "N/A",
       hasVoted: false,
+      createdByUser: true,
     },
   ];
 
@@ -100,26 +118,20 @@ export default function Dashboard() {
         {activeTab === "votingResults" && (
           <div>
             {votingInstances
-              .filter((instance) => instance.status === "Completed")
+              .filter((instance) => instance.status === "Closed")
               .map((instance) => (
                 <VotingResultsCard key={instance.id} instance={instance} />
               ))}
           </div>
         )}
 
-        {activeTab === "myVotingInstances" && (
-          <div>
-            {votingInstances.map((instance) => (
-              <VotingInstanceCard key={instance.id} instance={instance} />
-            ))}
-            {userRole !== "Voter" && (
-              <button
-                onClick={() => setIsAddModalOpen(true)}
-                className="bg-blue-600 text-white px-4 py-2 mt-4 rounded-md"
-              >
-                Add Voting Instance
-              </button>
-            )}
+        {activeTab === "myVotingInstances" && userRole !== "Voter" && (
+          <div className="flex space-x-4 overflow-x-auto">
+            {votingInstances
+              .filter((instance) => instance.createdByUser)
+              .map((instance) => (
+                <VotingInstanceCard key={instance.id} instance={instance} />
+              ))}
           </div>
         )}
 

@@ -21,7 +21,7 @@ export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
   description,
 }) => {
   return (
-    <div className="w-80 rounded-lg shadow-md bg-gray-800 text-white p-4 w-full font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
+    <div className="w-80 rounded-lg shadow-md bg-gray-800 text-white p-4 font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
       {/* Organization Image */}
       <div className="flex justify-center mb-2">
         <img
