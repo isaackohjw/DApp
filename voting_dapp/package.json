@@ -12,10 +12,12 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
+    "@nomicfoundation/hardhat-viem": "^2.0.6",
     "chai": "^4.3.7",
     "ethers": "^6.13.4",
     "hardhat": "^2.22.16",
-    "mocha": "^10.8.2"
+    "mocha": "^10.8.2",
+    "viem": "^2.21.53"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.1.0"
