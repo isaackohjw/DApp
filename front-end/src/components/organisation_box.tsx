@@ -1,22 +1,16 @@
 "use client";
 
 import React from "react";
+import { Role, roleColors } from "@/global_var";
 
 // Define prop types for OrganisationBox
 interface OrganisationBoxProps {
   name: string;
   profilePic: string;
-  role: "Owner" | "Admin" | "Voter";
+  role: Role;
   token: string;
   description: string;
 }
-
-// Role color mapping
-const roleColors: { [key in "Owner" | "Admin" | "Voter"]: string } = {
-  Owner: "bg-green-600",
-  Admin: "bg-blue-600",
-  Voter: "bg-orange-600",
-};
 
 // OrganisationBox component to display details of an organization
 export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
