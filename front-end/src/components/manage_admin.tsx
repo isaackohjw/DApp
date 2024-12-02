@@ -1,3 +1,8 @@
+import React, { useState } from "react";
+import { AdminList } from "@/components/admin_list";
+import { AddAdminInput } from "@/components/admin_input";
+import { ConfirmationModalAd } from "@/components/admin_confirmation_modal";
+
 interface AddRemoveAdminModalProps {
   onClose: () => void;
 }
@@ -5,37 +10,78 @@ interface AddRemoveAdminModalProps {
 export const AddRemoveAdminModal: React.FC<AddRemoveAdminModalProps> = ({
   onClose,
 }) => {
+  const [adminList, setAdminList] = useState<string[]>([
+    "admin1@example.com",
+    "admin2@example.com",
+    "admin3@example.com",
+  ]);
+  const [newAdmins, setNewAdmins] = useState<string[]>([]);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"add" | "remove" | null>(
+    null
+  );
+  const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
+
+  // Add admins to the list
+  const handleAddAdmins = (admins: string[]) => {
+    setNewAdmins(admins);
+    setConfirmAction("add");
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmAddAdmins = () => {
+    setAdminList((prev) => [...prev, ...newAdmins]);
+    setNewAdmins([]);
+    setIsConfirmModalOpen(false);
+  };
+
+  // Remove admin from the list
+  const handleRemoveAdmin = (admin: string) => {
+    setAdminToRemove(admin);
+    setConfirmAction("remove");
+    setIsConfirmModalOpen(true);
+  };
+
+  const confirmRemoveAdmin = () => {
+    setAdminList((prev) => prev.filter((admin) => admin !== adminToRemove));
+    setAdminToRemove(null);
+    setIsConfirmModalOpen(false);
+  };
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-gray-800 text-white p-8 rounded-lg w-96">
-        <h2 className="text-xl">Add or Remove Admins</h2>
-        {/* For simplicity, here you could add inputs or a list of current admins */}
-        <input
-          type="text"
-          placeholder="Admin Username"
-          className="mt-4 w-full px-4 py-2 rounded-md"
-        />
-        <div className="flex space-x-4 mt-4">
-          <button
-            onClick={() => console.log("Admin Added")}
-            className="bg-blue-600 text-white px-6 py-2 rounded-md"
-          >
-            Add Admin
-          </button>
-          <button
-            onClick={() => console.log("Admin Removed")}
-            className="bg-red-600 text-white px-6 py-2 rounded-md"
-          >
-            Remove Admin
-          </button>
-        </div>
+      <div className="bg-gray-800 text-white p-8 rounded-lg w-[24rem] space-y-4 relative">
+        {/* Title */}
+        <h2 className="text-2xl text-center font-semibold">Admin List</h2>
+
+        {/* Admin List */}
+        <AdminList admins={adminList} onRemove={handleRemoveAdmin} />
+
+        {/* Add Admins */}
+        <AddAdminInput onAdd={handleAddAdmins} />
+
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="bg-gray-600 text-white px-6 py-2 mt-4 rounded-md"
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-200"
         >
-          Close
+          ✖
         </button>
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModalAd
+        isOpen={isConfirmModalOpen}
+        message={
+          confirmAction === "add"
+            ? `Are you sure you want to add ${newAdmins.length} admins?`
+            : `Are you sure you want to remove ${adminToRemove}?`
+        }
+        onConfirm={
+          confirmAction === "add" ? confirmAddAdmins : confirmRemoveAdmin
+        }
+        onCancel={() => setIsConfirmModalOpen(false)}
+      />
     </div>
   );
 };

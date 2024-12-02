@@ -9,12 +9,23 @@ import { ConfirmationModal } from "@/components/confirmation_modal";
 import { Role, VotingInstance, VotingStatus } from "@/global_var";
 import { Tabs } from "@/components/dashboard_taskbar";
 import { Titlebar } from "@/components/titlebar";
+import { AdminList } from "@/components/admin_list";
+import { AddAdminInput } from "@/components/admin_input";
+import { ConfirmationModalAd } from "@/components/admin_confirmation_modal";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("currentVoting");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [adminList, setAdminList] = useState<string[]>([
+    "admin1@example.com",
+    "admin2@example.com",
+    "admin3@example.com",
+  ]); // Example admin list
+  const [newAdmin, setNewAdmin] = useState<string>(""); // New admin input field
+  const [confirmAction, setConfirmAction] = useState<string | null>(null); // To track which confirmation action to show
+  const [adminToRemove, setAdminToRemove] = useState<string | null>(null); // Admin to be removed
 
   // Simulated data
   const userRole: Role = "Owner"; // Can be "Voter", "Admin", or "Owner"
@@ -67,13 +78,34 @@ export default function Dashboard() {
 
   // Handlers for Confirmation Modal
   const handleConfirm = () => {
-    console.log("Confirmed");
-    setIsConfirmModalOpen(false); // Close modal after confirmation
+    if (confirmAction === "remove" && adminToRemove) {
+      confirmRemoveAdmin();
+    }
   };
 
   const handleCancel = () => {
-    console.log("Cancelled");
     setIsConfirmModalOpen(false); // Close modal after cancellation
+  };
+
+  const handleAddAdmins = () => {
+    if (newAdmin) {
+      setAdminList((prevAdminList) => [...prevAdminList, newAdmin]); // Add one new admin to the list
+      setNewAdmin(""); // Clear input field after adding
+    }
+  };
+
+  const handleRemoveAdmin = (admin: string) => {
+    setAdminToRemove(admin);
+    setConfirmAction("remove");
+    setIsConfirmModalOpen(true); // Show confirmation modal before removing admin
+  };
+
+  const confirmRemoveAdmin = () => {
+    setAdminList((prevAdminList) =>
+      prevAdminList.filter((admin) => admin !== adminToRemove)
+    ); // Remove admin from the list
+    setAdminToRemove(null); // Clear the selected admin
+    setIsConfirmModalOpen(false); // Close modal
   };
 
   // Tabs data
@@ -136,14 +168,59 @@ export default function Dashboard() {
         )}
 
         {activeTab === "manageAdmins" && userRole === "Owner" && (
-          <div>
-            <h2 className="text-xl mb-4">Manage Admins</h2>
-            <button
-              onClick={() => setIsAdminModalOpen(true)}
-              className="bg-blue-600 text-white px-4 py-2 mt-4 rounded-md"
-            >
-              Add/Remove Admins
-            </button>
+          <div
+            className="mx-auto flex flex-col items-center "
+            style={{ width: "24rem" }}
+          >
+            <h2 className="text-2xl font-bold mb-6">Admin List</h2>
+            <div className="w-full max-w-xl p-4 bg-gray-800 rounded-lg">
+              {/* List of Admins */}
+              {adminList.length > 0 ? (
+                adminList.map((admin) => (
+                  <div
+                    key={admin}
+                    className="flex justify-between items-center bg-gray-700 p-3 mb-2 rounded-md"
+                  >
+                    <span>{admin}</span>
+                    <button
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveAdmin(admin)}
+                    >
+                      ✖
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-400">No admins available.</p>
+              )}
+            </div>
+
+            {/* Add Admin Section */}
+            <div className="flex items-center space-x-4 w-full max-w-xl mt-4">
+              <input
+                type="email"
+                className="p-2 w-full bg-gray-700 rounded-md"
+                placeholder="Enter new admin wallet address"
+                value={newAdmin}
+                onChange={(e) => setNewAdmin(e.target.value)}
+              />
+              <button
+                className="bg-blue-600 p-1 rounded-md text-xs"
+                onClick={handleAddAdmins}
+              >
+                Add Admin
+              </button>
+            </div>
+
+            {/* Confirmation Modal */}
+            {isConfirmModalOpen && confirmAction === "remove" && (
+              <ConfirmationModal
+                isOpen={isConfirmModalOpen}
+                message={`Are you sure you want to remove ${adminToRemove}?`}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+              />
+            )}
           </div>
         )}
       </div>
@@ -156,14 +233,6 @@ export default function Dashboard() {
       {isAdminModalOpen && (
         <AddRemoveAdminModal onClose={() => setIsAdminModalOpen(false)} />
       )}
-
-      {/* Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        onConfirm={handleConfirm}
-        onCancel={handleCancel}
-        message="Are you sure you want to proceed?"
-      />
     </div>
   );
 }
