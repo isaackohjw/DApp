@@ -26,22 +26,34 @@ interface TabsProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   tabs: { label: string; value: string }[];
+  organisationName: string;
 }
 
-export const Tabs: React.FC<TabsProps> = ({ activeTab, onTabChange, tabs }) => {
+export const Tabs: React.FC<TabsProps> = ({
+  activeTab,
+  onTabChange,
+  tabs,
+  organisationName,
+}) => {
   return (
-    <div className="mt-20 bg-gray-800 z-10">
-      {" "}
-      <div className="flex space-x-4">
-        {tabs.map((tab) => (
-          <Tab
-            key={tab.value}
-            label={tab.label}
-            value={tab.value}
-            activeTab={activeTab}
-            onClick={onTabChange}
-          />
-        ))}
+    <div className="mt-20 bg-gray-900 z-10">
+      <div className="flex justify-between items-center px-6">
+        {/* Organisation Name + Dashboard */}
+        <div className="text-white text-lg font-bold ml-4">
+          {organisationName} Dashboard
+        </div>
+        {/* Tabs Section */}
+        <div className="flex space-x-4 mr-4">
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.value}
+              label={tab.label}
+              value={tab.value}
+              activeTab={activeTab}
+              onClick={onTabChange}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

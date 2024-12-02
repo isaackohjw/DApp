@@ -18,9 +18,33 @@ export default function Dashboard() {
 
   // Simulated data
   const userRole: Role = "Owner"; // Can be "Voter", "Admin", or "Owner"
+
+  // Test Data for Voting Instances
   const votingInstances = [
-    { id: 1, title: "Voting 1", status: "Ongoing" },
-    { id: 2, title: "Voting 2", status: "Completed" },
+    {
+      id: 1,
+      title: "Election 2024",
+      status: "Open",
+      createdAt: "2024-12-01",
+      timeLeft: "2d 3h 15m",
+      hasVoted: true,
+    },
+    {
+      id: 2,
+      title: "Company Annual Vote",
+      status: "Closed",
+      createdAt: "2024-11-20",
+      timeLeft: "0d 0h 0m",
+      hasVoted: false,
+    },
+    {
+      id: 3,
+      title: "Community Fund Allocation",
+      status: "Suspended",
+      createdAt: "2024-11-25",
+      timeLeft: "N/A",
+      hasVoted: false,
+    },
   ];
 
   // Handlers for Confirmation Modal
@@ -55,18 +79,21 @@ export default function Dashboard() {
       <Titlebar name="John Doe" initial="J" />
 
       {/* Tab Navigation */}
-      <Tabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+      <Tabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={tabs}
+        organisationName="Tech Innovators"
+      />
 
       {/* Main Content */}
       <div className="pt-16 px-4" style={{ marginTop: "-40px" }}>
         {/* Tab Content */}
         {activeTab === "currentVoting" && (
-          <div>
-            {votingInstances
-              .filter((instance) => instance.status === "Ongoing")
-              .map((instance) => (
-                <VotingInstanceCard key={instance.id} instance={instance} />
-              ))}
+          <div className="flex space-x-4 overflow-x-auto">
+            {votingInstances.map((instance) => (
+              <VotingInstanceCard key={instance.id} instance={instance} />
+            ))}
           </div>
         )}
 
