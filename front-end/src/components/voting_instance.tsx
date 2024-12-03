@@ -7,10 +7,12 @@ interface VotingInstanceCardProps {
     timeLeft?: string;
     hasVoted?: boolean;
   };
+  onClick: () => void;
 }
 
 export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
   instance,
+  onClick,
 }) => {
   const {
     id,
@@ -27,6 +29,7 @@ export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
       <h3
         className="text-lg font-bold text-white mb-4 text-center leading-tight line-clamp-2"
         style={{ minHeight: "2.8rem" }}
+        onClick={onClick}
       >
         {instance.title}
       </h3>

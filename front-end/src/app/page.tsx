@@ -6,10 +6,10 @@ import { VotingResultsCard } from "@/components/voting_results";
 import { AddVotingInstanceModal } from "@/components/add_voting";
 import { AddRemoveAdminModal } from "@/components/manage_admin";
 import { ConfirmationModal } from "@/components/confirmation_modal";
-import { Role, VotingInstance, VotingStatus } from "@/global_var";
+import { Role, VotingInstance, VotingStatus, VotingChoice } from "@/global_var";
 import { Tabs } from "@/components/dashboard_taskbar";
 import { Titlebar } from "@/components/titlebar";
-import VotingModal from "@/components/voting_modal";
+import { VotingModal } from "@/components/voting_modal";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("currentVoting");
@@ -24,6 +24,8 @@ export default function Dashboard() {
   const [newAdmin, setNewAdmin] = useState<string>("");
   const [confirmAction, setConfirmAction] = useState<string | null>(null);
   const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
+  const [selectedInstance, setSelectedInstance] =
+    useState<VotingInstance | null>(null);
 
   // Simulated data
   const userRole: Role = "Owner"; // Can be "Voter", "Admin", or "Owner"
@@ -33,6 +35,7 @@ export default function Dashboard() {
     {
       id: 1,
       title: "Election 2024",
+      description: "default description",
       status: VotingStatus.OPEN,
       totalVoters: 500,
       votedYes: 300,
@@ -47,6 +50,7 @@ export default function Dashboard() {
     {
       id: 2,
       title: "Company Annual Vote",
+      description: "default description",
       status: VotingStatus.CLOSED,
       totalVoters: 300,
       votedYes: 89,
@@ -61,6 +65,7 @@ export default function Dashboard() {
     {
       id: 3,
       title: "Community Fund Allocation",
+      description: "default description",
       status: VotingStatus.SUSPENDED,
       totalVoters: 400,
       votedYes: 8,
@@ -106,6 +111,29 @@ export default function Dashboard() {
     setIsConfirmModalOpen(false);
   };
 
+  // Open the modal with the selected instance
+  const handleCardClick = (instance: VotingInstance) => {
+    if (!instance.hasVoted) {
+      setSelectedInstance(instance);
+    }
+  };
+
+  const handleModalOpen = (instance: VotingInstance) => {
+    setSelectedInstance(instance); // Set the selected instance to show modal
+  };
+
+  // Close the modal
+  const handleModalClose = () => {
+    setSelectedInstance(null);
+  };
+
+  const handleVote = (instanceId: number, choice: VotingChoice) => {
+    // Logic for handling the vote (you can implement it here)
+    console.log(`Voted ${choice} for instance ${instanceId}`);
+    // After voting, you can close the modal
+    handleModalClose();
+  };
+
   // Tabs data
   const tabs = [
     { label: "Current Voting", value: "currentVoting" },
@@ -140,8 +168,21 @@ export default function Dashboard() {
         {activeTab === "currentVoting" && (
           <div className="flex space-x-4 overflow-x-auto">
             {votingInstances.map((instance) => (
-              <VotingInstanceCard key={instance.id} instance={instance} />
+              <VotingInstanceCard
+                key={instance.id}
+                instance={instance}
+                onClick={() => handleModalOpen(instance)} // Trigger modal on click
+              />
             ))}
+
+            {/* Conditionally render the modal if a voting instance is selected */}
+            {selectedInstance && (
+              <VotingModal
+                instance={selectedInstance}
+                onClose={handleModalClose} // Pass close handler to modal
+                onVote={handleVote} // Pass vote handler to modal
+              />
+            )}
           </div>
         )}
 
@@ -160,7 +201,11 @@ export default function Dashboard() {
             {votingInstances
               .filter((instance) => instance.createdByUser)
               .map((instance) => (
-                <VotingInstanceCard key={instance.id} instance={instance} />
+                <VotingInstanceCard
+                  key={instance.id}
+                  instance={instance}
+                  onClick={() => handleCardClick(instance)}
+                />
               ))}
           </div>
         )}
@@ -266,6 +311,14 @@ export default function Dashboard() {
             console.log("Created Voting Instance:", data);
             setIsAddModalOpen(false);
           }}
+        />
+      )}
+
+      {selectedInstance && (
+        <VotingModal
+          instance={selectedInstance}
+          onVote={handleVote}
+          onClose={handleModalClose}
         />
       )}
 
