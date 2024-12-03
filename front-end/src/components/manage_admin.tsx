@@ -7,8 +7,16 @@ interface AddRemoveAdminModalProps {
   onClose: () => void;
 }
 
-export const AddRemoveAdminModal: React.FC<AddRemoveAdminModalProps> = ({
+export const AddRemoveAdminModal = ({
   onClose,
+  organizations,
+  onSelectOrganization,
+  selectedOrganization,
+  onAddAdmin,
+  newAdmin,
+  setNewAdmin,
+  isLoading,
+  error,
 }) => {
   const [adminList, setAdminList] = useState<string[]>([
     "admin1@example.com",

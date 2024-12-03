@@ -1,3 +1,8 @@
+'use client';
+
+import React from "react";
+import { useRouter } from "next/navigation";
+
 interface VotingInstanceCardProps {
   instance: {
     id: number;

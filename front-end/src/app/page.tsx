@@ -1,6 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { createWalletClient, createPublicClient, http, Address, custom } from "viem";
+import { holesky } from "viem/chains";
 import { VotingInstanceCard } from "@/components/voting_instance";
 import { VotingResultsCard } from "@/components/voting_results";
 import { AddVotingInstanceModal } from "@/components/add_voting";
@@ -10,320 +12,229 @@ import { Role, VotingInstance, VotingStatus, VotingChoice } from "@/global_var";
 import { Tabs } from "@/components/dashboard_taskbar";
 import { Titlebar } from "@/components/titlebar";
 import { VotingModal } from "@/components/voting_modal";
+import { TokenInfo } from "@/components/token_info";
+import { OrganizationFactory } from "../artifacts/OrganizationFactory.ts";
+import { Organization } from "../artifacts/Organization.ts";
+import { useRouter } from "next/navigation";
+
 
 export default function Dashboard() {
+  const router = useRouter();
+  const factoryAddress: Address = "0x5b5bb3ced52d2aca87096f72e437f1d30939258f";
+
+  const [wallets, setWallets] = useState<string[]>([]);
+  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("currentVoting");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
-  const [adminList, setAdminList] = useState<string[]>([
-    "admin1@example.com",
-    "admin2@example.com",
-    "admin3@example.com",
-  ]);
-  const [newAdmin, setNewAdmin] = useState<string>("");
-  const [confirmAction, setConfirmAction] = useState<string | null>(null);
-  const [adminToRemove, setAdminToRemove] = useState<string | null>(null);
-  const [selectedInstance, setSelectedInstance] =
-    useState<VotingInstance | null>(null);
+  const [newAdmin, setNewAdmin] = useState<string>(""); // Input for the new admin address
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedOrganization, setSelectedOrganization] = useState<string | null>(null);
+  const [organizationDetails, setOrganizationDetails] = useState<
+    { name: string; owner: string; address: string; isAdmin: boolean }[]
+  >([]);
 
-  // Simulated data
-  const userRole: Role = "Owner"; // Can be "Voter", "Admin", or "Owner"
+  const viemClient = createPublicClient({
+    chain: holesky,
+    transport: http(),
+  });
 
-  // Test Data for Voting Instances
-  const votingInstances = [
-    {
-      id: 1,
-      title: "Election 2024",
-      description: "default description",
-      status: VotingStatus.OPEN,
-      totalVoters: 500,
-      votedYes: 300,
-      votedNo: 120,
-      votedAbstain: 50,
-      createdAt: "2024-12-01",
-      closedAt: "2024-12-02",
-      timeLeft: "2d 3h 15m",
-      hasVoted: true,
-      createdByUser: true,
-    },
-    {
-      id: 2,
-      title: "Company Annual Vote",
-      description: "default description",
-      status: VotingStatus.CLOSED,
-      totalVoters: 300,
-      votedYes: 89,
-      votedNo: 150,
-      votedAbstain: 50,
-      createdAt: "2024-11-20",
-      closedAt: "2024-11-21",
-      timeLeft: "0d 0h 0m",
-      hasVoted: false,
-      createdByUser: false,
-    },
-    {
-      id: 3,
-      title: "Community Fund Allocation",
-      description: "default description",
-      status: VotingStatus.SUSPENDED,
-      totalVoters: 400,
-      votedYes: 8,
-      votedNo: 100,
-      votedAbstain: 50,
-      createdAt: "2024-11-25",
-      closedAt: "2024-11-26",
-      timeLeft: "N/A",
-      hasVoted: false,
-      createdByUser: true,
-    },
-  ];
+  const walletClient = selectedWallet
+    ? createWalletClient({
+      account: selectedWallet as Address,
+      chain: holesky,
+      transport: custom(window.ethereum),
+    })
+    : null;
 
-  // Handlers for Confirmation Modal
-  const handleConfirm = () => {
-    if (confirmAction === "remove" && adminToRemove) {
-      confirmRemoveAdmin();
+  useEffect(() => {
+    const storedWallets = localStorage.getItem("wallets");
+    const storedSelectedWallet = localStorage.getItem("selectedWallet");
+
+    if (storedWallets) {
+      setWallets(JSON.parse(storedWallets));
+    }
+    if (storedSelectedWallet) {
+      setSelectedWallet(storedSelectedWallet);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedWallet) {
+      fetchOrganizationDetails();
+    }
+  }, [selectedWallet]);
+
+  const fetchOrganizationDetails = async () => {
+    try {
+      setLoading(true);
+
+      const data = await viemClient.readContract({
+        address: factoryAddress,
+        abi: OrganizationFactory,
+        functionName: "getOrganizations",
+        args: [],
+      });
+
+      const details = await Promise.all(
+        (data as Address[]).map(async (address) => {
+          const name = await viemClient.readContract({
+            address,
+            abi: Organization,
+            functionName: "name",
+          });
+
+          const owner = await viemClient.readContract({
+            address,
+            abi: Organization,
+            functionName: "owner",
+          });
+
+          const isAdmin = await viemClient.readContract({
+            address,
+            abi: Organization,
+            functionName: "admins",
+            args: [selectedWallet as Address],
+          });
+
+          return {
+            name: name as string,
+            owner: owner as string,
+            address,
+            isAdmin: Boolean(isAdmin),
+          };
+        })
+      );
+
+      const associatedOrganizations = details.filter(
+        (org) =>
+          org.owner.toLowerCase() === selectedWallet?.toLowerCase() || org.isAdmin
+      );
+
+      setOrganizationDetails(associatedOrganizations);
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleCancel = () => {
-    setIsConfirmModalOpen(false);
+  const handleSelectOrganization = (organization: string) => {
+    setSelectedOrganization(organization);
   };
 
-  const handleAddAdmins = () => {
-    if (newAdmin) {
-      setAdminList((prevAdminList) => [...prevAdminList, newAdmin]);
+  const handleAddAdmin = async () => {
+    if (!newAdmin || !selectedOrganization) {
+      setError("Please enter a valid address and select an organization.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const contract = walletClient?.contract({
+        address: selectedOrganization as Address,
+        abi: Organization,
+      });
+
+      const tx = await contract?.write.addAdmin([newAdmin]);
+      console.log("Admin added successfully:", tx?.hash);
+
+      setIsAdminModalOpen(false);
       setNewAdmin("");
+    } catch (err) {
+      console.error("Error adding admin:", err);
+      setError("Failed to add admin. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleRemoveAdmin = (admin: string) => {
-    setAdminToRemove(admin);
-    setConfirmAction("remove");
-    setIsConfirmModalOpen(true);
-  };
-
-  const confirmRemoveAdmin = () => {
-    setAdminList((prevAdminList) =>
-      prevAdminList.filter((admin) => admin !== adminToRemove)
-    );
-    setAdminToRemove(null);
-    setIsConfirmModalOpen(false);
-  };
-
-  // Open the modal with the selected instance
-  const handleCardClick = (instance: VotingInstance) => {
-    if (!instance.hasVoted) {
-      setSelectedInstance(instance);
+  useEffect(() => {
+    if (selectedWallet) {
+      fetchOrganizationDetails();
     }
+  }, [selectedWallet]);
+
+  const handleSelectWallet = (wallet: string) => {
+    setSelectedWallet(wallet);
+    localStorage.setItem("selectedWallet", wallet);
   };
 
-  const handleModalOpen = (instance: VotingInstance) => {
-    setSelectedInstance(instance); // Set the selected instance to show modal
-  };
-
-  // Close the modal
-  const handleModalClose = () => {
-    setSelectedInstance(null);
-  };
-
-  const handleVote = (instanceId: number, choice: VotingChoice) => {
-    // Logic for handling the vote (you can implement it here)
-    console.log(`Voted ${choice} for instance ${instanceId}`);
-    // After voting, you can close the modal
-    handleModalClose();
-  };
-
-  // Tabs data
   const tabs = [
     { label: "Current Voting", value: "currentVoting" },
     { label: "Voting Results", value: "votingResults" },
+    { label: "Manage Admins", value: "manageAdmins" },
   ];
-
-  // Add admin-specific tabs if user is Admin or Owner
-  if (userRole === "Admin" || userRole === "Owner") {
-    tabs.push({ label: "My Voting Instances", value: "myVotingInstances" });
-  }
-
-  // Add Owner-specific tab if user is Owner
-  if (userRole === "Owner") {
-    tabs.push({ label: "Manage Admins", value: "manageAdmins" });
-  }
 
   return (
     <div className="min-h-screen text-white font-body">
-      <Titlebar name="John Doe" initial="J" />
-
-      {/* Tab Navigation */}
-      <Tabs
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        tabs={tabs}
-        organisationName="Tech Innovators"
+      <Titlebar
+        name={
+          selectedWallet
+            ? `${selectedWallet.slice(0, 6)}...${selectedWallet.slice(-4)}`
+            : "No Wallet Connected"
+        }
+        initial={selectedWallet ? selectedWallet[2].toUpperCase() : "N"}
+        wallets={wallets}
+        onSelectWallet={handleSelectWallet}
       />
 
-      {/* Main Content */}
+      <Tabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+
       <div className="pt-16 px-4" style={{ marginTop: "-40px" }}>
-        {/* Tab Content */}
-        {activeTab === "currentVoting" && (
-          <div className="flex space-x-4 overflow-x-auto">
-            {votingInstances.map((instance) => (
-              <VotingInstanceCard
-                key={instance.id}
-                instance={instance}
-                onClick={() => handleModalOpen(instance)} // Trigger modal on click
-              />
-            ))}
+        {activeTab === "currentVoting" && <div>Current Voting Instances</div>}
 
-            {/* Conditionally render the modal if a voting instance is selected */}
-            {selectedInstance && (
-              <VotingModal
-                instance={selectedInstance}
-                onClose={handleModalClose} // Pass close handler to modal
-                onVote={handleVote} // Pass vote handler to modal
-              />
-            )}
-          </div>
-        )}
+        {activeTab === "votingResults" && <div>Voting Results</div>}
 
-        {activeTab === "votingResults" && (
+        {activeTab === "manageAdmins" && (
           <div>
-            {votingInstances
-              .filter((instance) => instance.status === "Closed")
-              .map((instance) => (
-                <VotingResultsCard key={instance.id} instance={instance} />
-              ))}
-          </div>
-        )}
+            <h2 className="text-xl mb-4">Manage Admins</h2>
 
-        {activeTab === "myVotingInstances" && userRole !== "Voter" && (
-          <div className="flex space-x-4 overflow-x-auto">
-            {votingInstances
-              .filter((instance) => instance.createdByUser)
-              .map((instance) => (
-                <VotingInstanceCard
-                  key={instance.id}
-                  instance={instance}
-                  onClick={() => handleCardClick(instance)}
-                />
-              ))}
-          </div>
-        )}
-
-        {activeTab === "manageAdmins" && userRole === "Owner" && (
-          <div
-            className="mx-auto flex flex-col items-center "
-            style={{ width: "24rem" }}
-          >
-            <h2 className="text-2xl font-bold mb-6">Admin List</h2>
-            <div className="w-full max-w-xl p-4 bg-gray-800 rounded-lg">
-              {/* List of Admins */}
-              {adminList.length > 0 ? (
-                adminList.map((admin) => (
+            {loading ? (
+              <p>Loading organizations...</p>
+            ) : organizationDetails.length > 0 ? (
+              <div>
+                {organizationDetails.map((org) => (
                   <div
-                    key={admin}
-                    className="flex justify-between items-center bg-gray-700 p-3 mb-2 rounded-md"
+                    key={org.address}
+                    className="p-4 border rounded mb-4 cursor-pointer"
+                    onClick={() => router.push(`/organizations/${org.address}`)}
                   >
-                    <span>{admin}</span>
-                    <button
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => handleRemoveAdmin(admin)}
-                    >
-                      ✖
-                    </button>
+                    <h2 className="text-xl font-semibold">{org.name}</h2>
+                    <p>
+                      <strong>Role:</strong>{" "}
+                      {org.owner.toLowerCase() === selectedWallet?.toLowerCase()
+                        ? "Owner"
+                        : org.isAdmin
+                          ? "Admin"
+                          : "Member"}
+                    </p>
                   </div>
-                ))
-              ) : (
-                <p className="text-gray-400">No admins available.</p>
-              )}
-            </div>
-
-            {/* Add Admin Section */}
-            <div className="flex items-center space-x-4 w-full max-w-xl mt-4">
-              <input
-                type="email"
-                className="p-2 w-full bg-gray-700 rounded-md"
-                placeholder="Enter new admin wallet address"
-                value={newAdmin}
-                onChange={(e) => setNewAdmin(e.target.value)}
-              />
-              <button
-                className="bg-blue-600 p-1 rounded-md text-xs"
-                onClick={handleAddAdmins}
-              >
-                Add Admin
-              </button>
-            </div>
-
-            {/* Confirmation Modal */}
-            {isConfirmModalOpen && confirmAction === "remove" && (
-              <ConfirmationModal
-                isOpen={isConfirmModalOpen}
-                message={`Are you sure you want to remove ${adminToRemove}?`}
-                onConfirm={handleConfirm}
-                onCancel={handleCancel}
-              />
+                ))}
+              </div>
+            ) : (
+              <p>No organizations found.</p>
             )}
           </div>
         )}
       </div>
-
-      {/* Plus Button for Adding Voting Instance */}
-      <div className="fixed bottom-6 right-6">
-        <div className="group relative">
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className={`bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300 ${
-              userRole === "Voter" ? "hidden" : ""
-            }`}
-          >
-            <span className="text-3xl font-thin">+</span>
-          </button>
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span className="flex justify-center items-center text-white text-center text-xs font-normal px-3 py-1 rounded-full font-body shadow-lg">
-              Add Voting Instance
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="fixed bottom-6 left-6">
-        <div className="group relative">
-          <button
-            onClick={() => (window.location.href = "/organisation")} // change address here
-            className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300"
-          >
-            <span className="text-xl font-bold">←</span>
-          </button>
-          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <span className="flex justify-center items-center text-white text-center text-xs font-normal px-3 py-1 rounded-full font-body shadow-lg bg-gray-700">
-              Back to Organization
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Modals */}
-      {isAddModalOpen && (
-        <AddVotingInstanceModal
-          onClose={() => setIsAddModalOpen(false)}
-          onCreate={(data) => {
-            console.log("Created Voting Instance:", data);
-            setIsAddModalOpen(false);
-          }}
-        />
-      )}
-
-      {selectedInstance && (
-        <VotingModal
-          instance={selectedInstance}
-          onVote={handleVote}
-          onClose={handleModalClose}
-        />
-      )}
 
       {isAdminModalOpen && (
-        <AddRemoveAdminModal onClose={() => setIsAdminModalOpen(false)} />
+        <AddRemoveAdminModal
+          onClose={() => setIsAdminModalOpen(false)}
+          organizations={organizationDetails}
+          onSelectOrganization={handleSelectOrganization}
+          selectedOrganization={selectedOrganization}
+          onAddAdmin={handleAddAdmin}
+          newAdmin={newAdmin}
+          setNewAdmin={setNewAdmin}
+          isLoading={isLoading}
+          error={error}
+        />
       )}
     </div>
   );
