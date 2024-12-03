@@ -26,7 +26,6 @@ export enum VotingChoice {
 export interface VotingInstance {
   id: number;
   title: string;
-  description: string;
   status: VotingStatus;
   totalVoters: number;
   votedYes: number;
@@ -45,7 +44,6 @@ export const VOTING_STATUSES = [
   VotingStatus.CLOSED,
   VotingStatus.SUSPENDED,
 ];
-
 export const VOTING_CHOICES = [
   VotingChoice.YES,
   VotingChoice.NO,
