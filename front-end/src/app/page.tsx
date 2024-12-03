@@ -242,14 +242,29 @@ export default function Dashboard() {
         </div>
       </div>
 
+      <div className="fixed bottom-6 left-6">
+        <div className="group relative">
+          <button
+            onClick={() => (window.location.href = "/organisation")} // change address here
+            className="bg-gray-700 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 border-2 border-gray-300"
+          >
+            <span className="text-xl font-bold">←</span>
+          </button>
+          <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span className="flex justify-center items-center text-white text-center text-xs font-normal px-3 py-1 rounded-full font-body shadow-lg bg-gray-700">
+              Back to Organization
+            </span>
+          </div>
+        </div>
+      </div>
+
       {/* Modals */}
       {isAddModalOpen && (
         <AddVotingInstanceModal
           onClose={() => setIsAddModalOpen(false)}
           onCreate={(data) => {
             console.log("Created Voting Instance:", data);
-            // Add logic to handle the creation of the voting instance
-            setIsAddModalOpen(false); // Close modal after creation
+            setIsAddModalOpen(false);
           }}
         />
       )}
