@@ -23,20 +23,28 @@ export enum VotingChoice {
 }
 
 // VotingInstance type to represent each voting instance
+// export interface VotingInstance {
+//   id: number;
+//   title: string;
+//   description: string;
+//   status: VotingStatus;
+//   totalVoters: number;
+//   votedYes: number;
+//   votedNo: number;
+//   votedAbstain: number;
+//   deadline: string;
+//   timeLeft: string;
+//   hasVoted: boolean;
+//   createdByUser: boolean;
+// }
+
 export interface VotingInstance {
-  id: number;
   title: string;
-  description: string;
-  status: VotingStatus;
-  totalVoters: number;
   votedYes: number;
   votedNo: number;
   votedAbstain: number;
-  createdAt: string;
-  closedAt: string;
-  timeLeft: string;
-  hasVoted: boolean;
-  createdByUser: boolean;
+  totalVoters: number;
+  deadline: string;
 }
 
 // For global variables, you can add any constants you want to use across your app

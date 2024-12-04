@@ -1,4 +1,6 @@
+"use client";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type TitlebarProps = {
   name: string;
@@ -14,14 +16,19 @@ export function Titlebar({
   onSelectWallet,
 }: TitlebarProps) {
   const [showDropdown, setShowDropdown] = useState(false);
-
   const toggleDropdown = () => setShowDropdown(!showDropdown);
+  const router = useRouter();
+  const navigateToOrganizations = () => {
+    router.push("/organisations"); // Navigate to the organizations page
+  };
 
   return (
     <div className="text-white h-16 flex items-center px-4 bg-gray-900 fixed top-0 left-0 right-0 z-50">
       {/* Title */}
       <div className="flex justify-left ml-8 mt-2">
-        <span className="text-2xl rainbow-text font-title leading-normal">
+        <span
+          className="text-2xl rainbow-text font-title leading-normal"
+          onClick={navigateToOrganizations}>
           Voting Application
         </span>
       </div>

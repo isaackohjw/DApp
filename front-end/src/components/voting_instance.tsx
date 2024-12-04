@@ -1,72 +1,72 @@
 'use client';
 
 import React from "react";
-import { useRouter } from "next/navigation";
 
 interface VotingInstanceCardProps {
   instance: {
     id: number;
-    title: string;
-    status: string; // "Open" | "Closed" | "Suspended"
-    createdAt?: string;
-    timeLeft?: string;
-    hasVoted?: boolean;
+    description: string;
+    deadline: number; // UNIX timestamp
+    oneVotePerUser: boolean;
+    status: string; // "Open", "Closed", "Suspended"
   };
-  onClick: () => void;
+  hasVoted: boolean; // Whether the user has voted
+  onClick: () => void; // Callback for when the card is clicked
 }
 
 export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
   instance,
+  hasVoted,
   onClick,
 }) => {
-  const {
-    id,
-    title,
-    status,
-    createdAt = new Date().toISOString(),
-    timeLeft = "N/A",
-    hasVoted = false,
-  } = instance;
+  const { id, description, deadline, oneVotePerUser, status } = instance;
 
   return (
-    <div className="bg-gray-800 text-white p-2 pl-3 rounded-md shadow-md mb-6 border border-gray-700 relative w-52 hover:bg-gray-700 hover:scale-105 transform transition-all duration-300">
-      {/* Title */}
+    <div
+      className="bg-gray-800 text-white p-4 rounded-md shadow-md mb-6 border border-gray-700 relative hover:bg-gray-700 hover:scale-105 transform transition-all duration-300 cursor-pointer"
+      onClick={onClick}
+    >
+      {/* Description */}
       <h3
         className="text-lg font-bold text-white mb-4 text-center leading-tight line-clamp-2"
         style={{ minHeight: "2.8rem" }}
-        onClick={onClick}
       >
-        {instance.title}
+        {description}
       </h3>
 
       {/* Status */}
       <div
-        className={`flex justify-center items-center px-1 py-1 rounded-full text-sm font-semibold mb-4 bg-opacity-60 border border-gray-700 ${
+        className={`flex justify-center items-center px-2 py-1 rounded-full text-sm font-semibold mb-4 bg-opacity-60 border border-gray-700 ${
           getStatusStyles(status).bg
         }`}
       >
         <span className={getStatusStyles(status).text}>{status}</span>
       </div>
 
-      {/* Time Left */}
-      <div className="flex justify-center items-center mb-8">
-        <span className="px-4 py-1 rounded-md text-green-500 bg-green-900 bg-opacity-70 text-sm font-medium">
-          Time Left: {timeLeft}
+      {/* Deadline */}
+      <div className="flex justify-center items-center mb-4">
+        <span className="px-4 py-1 rounded-md text-blue-500 bg-blue-900 bg-opacity-70 text-sm font-medium">
+          Deadline: {new Date(deadline * 1000).toLocaleString()}
         </span>
       </div>
 
-      {/* Created At */}
-      <div className="absolute bottom-1 left-2 text-xs text-gray-500">
-        Created: {new Date(createdAt).toLocaleDateString()}
+      {/* Voting Rules */}
+      <div className="flex justify-center items-center text-sm text-gray-400 mb-4">
+        {oneVotePerUser ? "One vote per user" : "Multiple votes allowed"}
       </div>
 
-      {/* Vote Status Box */}
-      <div
-        className={`absolute bottom-1 right-2 px-1 py-1 rounded text-xs font-bold ${
-          hasVoted ? "bg-green-500 text-black" : "bg-gray-700 text-white"
-        }`}
-      >
-        {hasVoted ? "Voted" : "To Vote"}
+      {/* Voting Status */}
+      <div className="flex justify-center items-center text-sm font-bold mb-4">
+        {hasVoted ? (
+          <span className="text-green-500">Already Voted</span>
+        ) : (
+          <span className="text-red-500">Not Voted Yet</span>
+        )}
+      </div>
+
+      {/* ID */}
+      <div className="absolute bottom-1 left-2 text-xs text-gray-500">
+        Session ID: {id}
       </div>
     </div>
   );

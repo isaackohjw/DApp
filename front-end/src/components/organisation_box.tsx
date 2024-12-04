@@ -1,27 +1,33 @@
 "use client";
-
 import React from "react";
+import { useRouter } from "next/navigation";
 import { Role, roleColors } from "@/global_var";
 
-// Define prop types for OrganisationBox
 interface OrganisationBoxProps {
   name: string;
   profilePic?: string;
   role?: Role;
   token: string;
+  balance?: number; // Add balance as an optional prop
   description?: string;
 }
 
-// OrganisationBox component to display details of an organization
 export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
   name,
   profilePic,
   role,
   token,
+  balance = 0, // Default to 0 if no balance is passed
   description,
 }) => {
+  const router = useRouter();
+  const handleClick = () => {
+    router.push(`/dashboard/${token}`); // Navigate to the dashboard page with the contract address
+  };
   return (
-    <div className="w-80 rounded-lg shadow-md bg-gray-800 text-white p-4 font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer">
+    <div 
+    className="w-80 rounded-lg shadow-md bg-gray-800 text-white p-4 font-body transform transition-all duration-300 hover:scale-105 hover:shadow-xl hover:bg-gray-700 cursor-pointer"
+    onClick={handleClick}>
       {/* Organization Image */}
       {profilePic && (
         <div className="flex justify-center mb-2">
@@ -56,11 +62,18 @@ export const OrganisationBox: React.FC<OrganisationBoxProps> = ({
         </div>
       )}
 
-      {/* Token Used + Amount */}
+      {/* Token Address */}
       <div className="flex justify-center mb-2">
-        <div className="bg-gray-700 bg-opacity-80 text-white rounded-full px-3 py-1 text-xs font-semibold border-2 border-gray-500 transform transform transition-all duration-300 hover:bg-gray-400 hover:scale-105">
+        <div className="bg-gray-700 bg-opacity-80 text-white rounded-full px-3 py-1 text-xs font-semibold border-2 border-gray-500 transform transition-all duration-300 hover:bg-gray-400 hover:scale-105">
           {token}
         </div>
+      </div>
+
+      {/* Current Holdings */}
+      <div className="flex justify-center">
+        <span className="text-sm text-gray-300">
+          Current Holdings: <strong>{balance}</strong>
+        </span>
       </div>
     </div>
   );
