@@ -14,8 +14,14 @@ contract Organization {
         NO
     }
 
-    mapping(address => bool) public admins; // map admin addresses
-    VotingSession[] public votingSessions; // store all voting session
+    mapping(address => bool) public admins; // Map admin addresses
+    address[] public adminList; // List of admin addresses
+    VotingSession[] public votingSessions; // Store all voting sessions
+    mapping(uint256 => mapping(address => VoteOption)) public voteOptions; // sessionId -> user -> vote option
+    mapping(uint256 => mapping(address => bool)) public hasVoted; // sessionId -> user -> has voted
+    mapping(uint256 => mapping(VoteOption => uint256)) public totalVotesByOption; // sessionId -> vote option -> total votes
+    mapping(uint256 => uint256) public totalVotes; // sessionId -> total votes
+    mapping(uint256 => mapping(address => uint256)) public userVotes; // sessionId -> user -> number of votes
 
     event AdminAdded(address indexed admin);
     event VotingSessionCreated(uint256 indexed sessionId, string description);
@@ -24,11 +30,6 @@ contract Organization {
         string description;
         uint256 deadline;
         bool oneVotePerUser;
-        mapping(address => VoteOption) voteOption;
-        mapping(address => bool) hasVoted; // check if user had voted
-        mapping(address => uint256) votes; // mapping of user addresses to votes casted
-        mapping(VoteOption => uint256) totalVotesByOption;
-        uint256 totalVotes;
     }
 
     modifier onlyAdmin() {
@@ -36,21 +37,42 @@ contract Organization {
         _;
     }
 
-    constructor(string memory _name, address _owner, address _token) {
+    constructor(
+        string memory _name,
+        address _owner,
+        address _token
+    ) {
         name = _name;
         owner = _owner;
         token = _token;
         admins[_owner] = true;
+        adminList.push(_owner); // Add owner to admin list
     }
 
     function addAdmin(address admin) public onlyAdmin {
+        require(!admins[admin], "Already an admin");
         admins[admin] = true;
+        adminList.push(admin); // Add to admin list
         emit AdminAdded(admin);
+    }
+
+    function getAdmins() public view returns (address[] memory) {
+        return adminList;
     }
 
     function removeAdmin(address admin) public onlyAdmin {
         require(admin != owner, "Cannot remove owner");
+        require(admins[admin], "Not an admin");
         admins[admin] = false;
+
+        // Remove from admin list
+        for (uint256 i = 0; i < adminList.length; i++) {
+            if (adminList[i] == admin) {
+                adminList[i] = adminList[adminList.length - 1];
+                adminList.pop();
+                break;
+            }
+        }
     }
 
     function createVotingSession(
@@ -59,10 +81,7 @@ contract Organization {
         bool oneVotePerUser
     ) public onlyAdmin {
         require(deadline > block.timestamp, "Invalid deadline");
-        VotingSession storage session = votingSessions.push(); // store all voting sessions of org
-        session.description = description;
-        session.deadline = deadline;
-        session.oneVotePerUser = oneVotePerUser;
+        votingSessions.push(VotingSession(description, deadline, oneVotePerUser));
         emit VotingSessionCreated(votingSessions.length - 1, description);
     }
 
@@ -73,55 +92,46 @@ contract Organization {
         uint256 balance = IERC20(token).balanceOf(msg.sender);
         require(balance > 0, "Insufficient token balance");
 
-        require(!session.hasVoted[msg.sender], "Already voted");
-        session.hasVoted[msg.sender] = true;
-        session.voteOption[msg.sender] = option;
+        require(!hasVoted[sessionId][msg.sender], "Already voted");
+        hasVoted[sessionId][msg.sender] = true;
+        voteOptions[sessionId][msg.sender] = option;
 
-        if (session.oneVotePerUser) {
-            session.votes[msg.sender] += 1;
-            session.totalVotesByOption[option] += 1;
-            session.totalVotes += 1;
-        } else {
-            session.votes[msg.sender] += balance;
-            session.totalVotesByOption[option] += balance;
-            session.totalVotes += balance;
-        }
+        uint256 voteWeight = session.oneVotePerUser ? 1 : balance;
+        userVotes[sessionId][msg.sender] = voteWeight;
+        totalVotesByOption[sessionId][option] += voteWeight;
+        totalVotes[sessionId] += voteWeight;
     }
 
-    function getTotalVotesByOption(
-        uint256 sessionId,
-        VoteOption option
-    ) public view returns (uint256) {
-        require(sessionId < votingSessions.length, "Invalid session ID");
-        VotingSession storage session = votingSessions[sessionId];
-        return session.totalVotesByOption[option];
+    function getTotalVotesByOption(uint256 sessionId, VoteOption option)
+        public
+        view
+        returns (uint256)
+    {
+        return totalVotesByOption[sessionId][option];
     }
 
-    function getUserHasVoted(
-        uint256 sessionId,
-        address user
-    ) public view returns (bool) {
-        require(sessionId < votingSessions.length, "Invalid session ID");
-        VotingSession storage session = votingSessions[sessionId];
-        return session.hasVoted[user];
+    function getUserHasVoted(uint256 sessionId, address user)
+        public
+        view
+        returns (bool)
+    {
+        return hasVoted[sessionId][user];
     }
 
-    function getUserVoteOption(
-        uint256 sessionId,
-        address user
-    ) public view returns (VoteOption) {
-        require(sessionId < votingSessions.length, "Invalid session ID");
-        VotingSession storage session = votingSessions[sessionId];
-        require(session.hasVoted[user], "User has not voted in this session");
-        return session.voteOption[user];
+    function getUserVoteOption(uint256 sessionId, address user)
+        public
+        view
+        returns (VoteOption)
+    {
+        require(hasVoted[sessionId][user], "User has not voted in this session");
+        return voteOptions[sessionId][user];
     }
 
-    function getUserVotes(
-        uint256 sessionId,
-        address user
-    ) public view returns (uint256) {
-        require(sessionId < votingSessions.length, "Invalid session ID");
-        VotingSession storage session = votingSessions[sessionId];
-        return session.votes[user];
+    function getUserVotes(uint256 sessionId, address user)
+        public
+        view
+        returns (uint256)
+    {
+        return userVotes[sessionId][user];
     }
 }
