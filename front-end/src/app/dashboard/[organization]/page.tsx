@@ -16,6 +16,7 @@ import { Tabs } from "@/components/dashboard_taskbar";
 
 export default function OrganizationDashboard() {
   const [activeTab, setActiveTab] = useState("currentVoting");
+  const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const [sessions, setSessions] = useState<
     { id: number; description: string; deadline: number; oneVotePerUser: boolean; status: string, creationTime: number; }[]
@@ -27,14 +28,12 @@ export default function OrganizationDashboard() {
   const [owner, setOwner] = useState<string>("Loading...");
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [adminList, setAdminList] = useState<string[]>([]);
-  const [newAdmin, setNewAdmin] = useState<string>("");
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
   const [isRemovingAdmin, setIsRemovingAdmin] = useState(false);
   const [addAdminInput, setAddAdminInput] = useState<string>("");
   const [removeAdminInput, setRemoveAdminInput] = useState<string>("");
 
   const [loading, setLoading] = useState(false);
-  const [creating, setCreating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [hash, setHash] = useState<Hash>()
   const [receipt, setReceipt] = useState<TransactionReceipt>()
@@ -49,6 +48,43 @@ export default function OrganizationDashboard() {
   const [votingStatuses, setVotingStatuses] = useState<
     { sessionId: number; hasVoted: boolean }[]
   >([]);
+
+  useEffect(() => {
+    if (sessions.length > 0 && selectedWallet) {
+      fetchVotingStatuses();
+    }
+  }, [selectedWallet]);
+
+  useEffect(() => {
+    checkIsAdmin();
+    if (selectedWallet && activeTab === "currentVoting") {
+      handleFetchSessions();
+    }
+  }, [selectedWallet, activeTab]);
+
+  useEffect(() => {
+    if (activeTab === "votingResults") {
+      fetchVotingResults();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (pathname) {
+      const address = pathname.split("/").filter(Boolean).pop();
+      setContractAddress(address || "");
+    }
+  }, [pathname]);
+
+  useEffect(() => {
+    const storedWallets = localStorage.getItem("wallets");
+    const storedSelectedWallet = localStorage.getItem("selectedWallet");
+    if (storedWallets) {
+      setWallets(JSON.parse(storedWallets));
+    }
+    if (storedSelectedWallet) {
+      setSelectedWallet(storedSelectedWallet);
+    }
+  }, []);
 
   const fetchVotingStatuses = async () => {
     if (!selectedWallet) return;
@@ -70,23 +106,50 @@ export default function OrganizationDashboard() {
       console.error("Error fetching voting status:", error);
     }
   };
-  useEffect(() => {
-    if (sessions.length > 0 && selectedWallet) {
-      fetchVotingStatuses();
-    }
-  }, [sessions, selectedWallet]);
 
   useEffect(() => {
-    if (selectedWallet && activeTab === "currentVoting") {
-      handleFetchSessions();
-    }
-  }, [selectedWallet, activeTab]);
+    (async () => {
+      if (hash) {
+        try {
+          const receipt = await viemClient.waitForTransactionReceipt({ hash });
+          setReceipt(receipt);
+          console.log(receipt);
+          if (receipt.status === 'success') {
+            fetchOrganizationDetails();
+          } else {
+            alert("Failed operation. Transaction reverted.");
+          }
+        } catch (error) {
+          console.error("Error fetching transaction receipt:", error);
+          alert("An error occurred while fetching the transaction status.");
+        }
+      }
+    })();
+  }, [hash]);
 
   const tabs = [
     { label: "Current Voting", value: "currentVoting" },
     { label: "Voting Results", value: "votingResults" },
     { label: "Organisation Settings", value: "orgSettings" },
   ];
+
+  const checkIsAdmin = async () => {
+    if (!selectedWallet || !contractAddress) return;
+
+    try {
+      const adminStatus = await viemClient.readContract({
+        address: contractAddress as Address,
+        abi: Organization,
+        functionName: "admins", // Assuming `admins` is a mapping or a function in your contract
+        args: [selectedWallet as Address],
+      });
+
+      setIsAdmin(Boolean(adminStatus));
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false); // Default to non-admin if an error occurs
+    }
+  };
 
   const handleVotingSessionCreation = async (formData: {
     description: string;
@@ -121,35 +184,6 @@ export default function OrganizationDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (activeTab === "votingResults") {
-      fetchVotingResults();
-    }
-  }, [activeTab]);
-
-  const refreshAdminPage = () => {
-    fetchOrganizationDetails();
-  }
-
-  useEffect(() => {
-    (async () => {
-      if (hash) {
-        try {
-          const receipt = await viemClient.waitForTransactionReceipt({ hash });
-          setReceipt(receipt);
-          console.log(receipt);
-          if (receipt.status === 'success') {
-            refreshAdminPage();
-          } else {
-            alert("Failed operation. Transaction reverted.");
-          }
-        } catch (error) {
-          console.error("Error fetching transaction receipt:", error);
-          alert("An error occurred while fetching the transaction status.");
-        }
-      }
-    })();
-  }, [hash]);
 
   const viemClient = createPublicClient({
     chain: holesky,
@@ -163,24 +197,6 @@ export default function OrganizationDashboard() {
       transport: custom(window.ethereum),
     })
   );
-
-  useEffect(() => {
-    if (pathname) {
-      const address = pathname.split("/").filter(Boolean).pop();
-      setContractAddress(address || "");
-    }
-  }, [pathname]);
-
-  useEffect(() => {
-    const storedWallets = localStorage.getItem("wallets");
-    const storedSelectedWallet = localStorage.getItem("selectedWallet");
-    if (storedWallets) {
-      setWallets(JSON.parse(storedWallets));
-    }
-    if (storedSelectedWallet) {
-      setSelectedWallet(storedSelectedWallet);
-    }
-  }, []);
 
   const fetchVotingResults = async () => {
     try {
@@ -212,16 +228,16 @@ export default function OrganizationDashboard() {
             args: [BigInt(i)],
           }),
         ]);
-  
+
         const normalizeVote = (rawVotes: any) => {
           return sessions[i]?.oneVotePerUser ? Number(rawVotes) : Number(rawVotes) / 10 ** 18;
         };
-  
+
         const normalizedYesVotes = normalizeVote(yesVotes);
         const normalizedNoVotes = normalizeVote(noVotes);
         const normalizedAbstainVotes = normalizeVote(abstainVotes);
         const normalizedTotalVotes = normalizeVote(totalVotes); // Normalize total votes
-  
+
         resultsData.push({
           sessionId: i,
           title: sessions[i].description,
@@ -241,15 +257,21 @@ export default function OrganizationDashboard() {
 
   const handleFetchSessions = async () => {
     const sessionData = [];
-
     try {
-      for (let i = 0; i < 500; i++) {
+      const sessionCount = await viemClient.readContract({
+        address: contractAddress as Address,
+        abi: Organization,
+        functionName: "getVotingSessionCount",
+        args: [],
+      });
+      
+      for (let i = 0; i < sessionCount; i++) {
         try {
           const session = await viemClient.readContract({
             address: contractAddress as Address,
             abi: Organization,
             functionName: "votingSessions",
-            args: [BigInt(i)], // Pass index as BigInt
+            args: [BigInt(i)],
           });
 
           const [description, deadline, oneVotePerUser, creationTime] = session;
@@ -277,15 +299,14 @@ export default function OrganizationDashboard() {
   const handleSelectWallet = async (wallet: string) => {
     try {
       setSelectedWallet(wallet);
-      localStorage.setItem("selectedWallet", wallet); // Store the selected wallet
+      localStorage.setItem("selectedWallet", wallet);
 
-      // Update the walletClient with the new wallet
       const client = createWalletClient({
         account: wallet as Address,
         chain: holesky,
         transport: custom(window.ethereum),
       });
-      setWalletClient(client); // Update the wallet client
+      setWalletClient(client);
     } catch (error) {
       console.error("Error switching wallet:", error);
       alert("Failed to switch wallet. Please try again.");
@@ -345,11 +366,11 @@ export default function OrganizationDashboard() {
         address: address,
         abi: Organization,
         functionName: "addAdmin",
-        args: [newAdmin as Address],
+        args: [addAdminInput as Address],
       });
       const hash = await walletClient.writeContract(request)
       setHash(hash)
-      setNewAdmin("");
+      setAddAdminInput("");
     } catch (error) {
       console.error("Error adding admin:", error);
       alert("Failed to add admin. Please try again.");
@@ -367,11 +388,11 @@ export default function OrganizationDashboard() {
         address: address,
         abi: Organization,
         functionName: "removeAdmin",
-        args: [admin as Address],
+        args: [removeAdminInput as Address],
       });
       const hash = await walletClient.writeContract(request);
       setHash(hash);
-      setNewAdmin(""); // Clear the input field after success
+      setRemoveAdminInput("");
     } catch (error: any) {
       console.error("Error removing admin:", error);
       alert(`Failed to remove admin: ${error.message}`);
@@ -519,12 +540,14 @@ export default function OrganizationDashboard() {
         )}
 
         {/* Bottom-Left Floating Button */}
-        <button
-          onClick={handleOpenModal}
-          className="fixed bottom-4 left-4 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
-        >
-          + Create Vote
-        </button>
+        {isAdmin && (
+          <button
+            onClick={handleOpenModal}
+            className="fixed bottom-4 left-4 bg-blue-600 text-white px-6 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-colors"
+          >
+            + Create Vote
+          </button>
+        )}
 
         {/* Modal Integration */}
         {isModalOpen && (

@@ -11,7 +11,7 @@ import { AddOrganisation } from "@/components/add_organisation";
 
 
 export default function OrganisationPage() {
-  const factoryAddress: Address = "0x738129f5e3259c075f4eb1f94025f25fbf875ad5";
+  const factoryAddress: Address = "0x40dcac9d2c852d650a9143c5da650b05095f351b";
   const [wallets, setWallets] = useState<string[]>([]);
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<string[]>([]);
@@ -26,7 +26,6 @@ export default function OrganisationPage() {
 
   const tabs = [
     { label: "Organizations", value: "organizations" },
-    { label: "xxx", value: "walletDetails" },
   ];
 
   const viemClient = createPublicClient({
