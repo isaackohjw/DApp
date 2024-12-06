@@ -1,6 +1,7 @@
 import type { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox-viem";
 import "@nomicfoundation/hardhat-viem";
+import "hardhat-gas-reporter";
 
 const config: HardhatUserConfig = {
   solidity: "0.8.27",
@@ -28,6 +29,9 @@ const config: HardhatUserConfig = {
         },
       },
     ],
+  },
+  gasReporter: {
+    enabled: true,
   },
 };
 
