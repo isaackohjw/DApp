@@ -51,6 +51,10 @@ contract Organization {
         admins[_owner] = true;
     }
 
+    function getVotingSessionCount() public view returns (uint256) {
+    return votingSessions.length;
+    }
+
     function addAdmin(address admin) public onlyAdmin {
         require(!admins[admin], "Already an admin");
         admins[admin] = true;
