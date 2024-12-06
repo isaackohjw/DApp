@@ -39,6 +39,19 @@ export const Organization =
 			"inputs": [
 				{
 					"indexed": true,
+					"internalType": "address",
+					"name": "admin",
+					"type": "address"
+				}
+			],
+			"name": "AdminRemoved",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
 					"internalType": "uint256",
 					"name": "sessionId",
 					"type": "uint256"
@@ -48,6 +61,24 @@ export const Organization =
 					"internalType": "string",
 					"name": "description",
 					"type": "string"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "deadline",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "bool",
+					"name": "oneVotePerUser",
+					"type": "bool"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256",
+					"name": "creationTime",
+					"type": "uint256"
 				}
 			],
 			"name": "VotingSessionCreated",
@@ -64,25 +95,6 @@ export const Organization =
 			"name": "addAdmin",
 			"outputs": [],
 			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
-			"inputs": [
-				{
-					"internalType": "uint256",
-					"name": "",
-					"type": "uint256"
-				}
-			],
-			"name": "adminList",
-			"outputs": [
-				{
-					"internalType": "address",
-					"name": "",
-					"type": "address"
-				}
-			],
-			"stateMutability": "view",
 			"type": "function"
 		},
 		{
@@ -125,19 +137,6 @@ export const Organization =
 			"name": "createVotingSession",
 			"outputs": [],
 			"stateMutability": "nonpayable",
-			"type": "function"
-		},
-		{
-			"inputs": [],
-			"name": "getAdmins",
-			"outputs": [
-				{
-					"internalType": "address[]",
-					"name": "",
-					"type": "address[]"
-				}
-			],
-			"stateMutability": "view",
 			"type": "function"
 		},
 		{
@@ -445,10 +444,14 @@ export const Organization =
 					"internalType": "bool",
 					"name": "oneVotePerUser",
 					"type": "bool"
+				},
+				{
+					"internalType": "uint256",
+					"name": "creationTime",
+					"type": "uint256"
 				}
 			],
 			"stateMutability": "view",
 			"type": "function"
 		}
-
 	] as const;

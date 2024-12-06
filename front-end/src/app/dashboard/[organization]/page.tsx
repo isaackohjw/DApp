@@ -14,20 +14,11 @@ import { usePathname } from "next/navigation";
 import { Titlebar } from "@/components/titlebar";
 import { Tabs } from "@/components/dashboard_taskbar";
 
-interface Transaction {
-  from: string;
-  to: string;
-  value: number;
-  tokenSymbol: string;
-  tokenName: string;
-}
-
 export default function OrganizationDashboard() {
   const [activeTab, setActiveTab] = useState("currentVoting");
   const pathname = usePathname();
-
   const [sessions, setSessions] = useState<
-    { id: number; description: string; deadline: number; oneVotePerUser: boolean; status: string }[]
+    { id: number; description: string; deadline: number; oneVotePerUser: boolean; status: string, creationTime: number; }[]
   >([]);
   const [wallets, setWallets] = useState<string[]>([]);
   const [contractAddress, setContractAddress] = useState<string>("");
@@ -38,7 +29,10 @@ export default function OrganizationDashboard() {
   const [adminList, setAdminList] = useState<string[]>([]);
   const [newAdmin, setNewAdmin] = useState<string>("");
   const [isAddingAdmin, setIsAddingAdmin] = useState(false);
-  const [isRemovingAdmin, setIsRemovingAdmin] = useState<string | null>(null);
+  const [isRemovingAdmin, setIsRemovingAdmin] = useState(false);
+  const [addAdminInput, setAddAdminInput] = useState<string>("");
+  const [removeAdminInput, setRemoveAdminInput] = useState<string>("");
+
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -57,7 +51,7 @@ export default function OrganizationDashboard() {
   >([]);
 
   const fetchVotingStatuses = async () => {
-    if (!selectedWallet) return; // Ensure a wallet is connected
+    if (!selectedWallet) return;
 
     try {
       const statusData = [];
@@ -81,7 +75,7 @@ export default function OrganizationDashboard() {
       fetchVotingStatuses();
     }
   }, [sessions, selectedWallet]);
-  
+
   useEffect(() => {
     if (selectedWallet && activeTab === "currentVoting") {
       handleFetchSessions();
@@ -104,7 +98,6 @@ export default function OrganizationDashboard() {
 
       const deadlineTimestamp = BigInt(Math.floor(new Date(deadline).getTime() / 1000));
 
-      // Simulate the contract function to ensure validity
       const { request } = await viemClient.simulateContract({
         address: contractAddress as Address,
         account: selectedWallet as Address,
@@ -129,7 +122,16 @@ export default function OrganizationDashboard() {
   };
 
   useEffect(() => {
-    console.log(hash);
+    if (activeTab === "votingResults") {
+      fetchVotingResults();
+    }
+  }, [activeTab]);
+
+  const refreshAdminPage = () => {
+    fetchOrganizationDetails();
+  }
+
+  useEffect(() => {
     (async () => {
       if (hash) {
         try {
@@ -137,7 +139,6 @@ export default function OrganizationDashboard() {
           setReceipt(receipt);
           console.log(receipt);
           if (receipt.status === 'success') {
-            //alert("Admin added successfully!");
             refreshAdminPage();
           } else {
             alert("Failed operation. Transaction reverted.");
@@ -149,12 +150,6 @@ export default function OrganizationDashboard() {
       }
     })();
   }, [hash]);
-
-  // Function to refresh the admin page
-  const refreshAdminPage = () => {
-    // Fetch updated admin list or other necessary data
-    fetchOrganizationDetails(); // Assuming you have a function that fetches the admin list
-  };
 
   const viemClient = createPublicClient({
     chain: holesky,
@@ -176,7 +171,6 @@ export default function OrganizationDashboard() {
     }
   }, [pathname]);
 
-  // Load wallet from localStorage
   useEffect(() => {
     const storedWallets = localStorage.getItem("wallets");
     const storedSelectedWallet = localStorage.getItem("selectedWallet");
@@ -192,56 +186,53 @@ export default function OrganizationDashboard() {
     try {
       const resultsData = [];
       for (let i = 0; i < sessions.length; i++) {
-        const yesVotes = await viemClient.readContract({
-          address: contractAddress as Address,
-          abi: Organization,
-          functionName: "getTotalVotesByOption",
-          args: [BigInt(i), 1],
-        });
-
-        const noVotes = await viemClient.readContract({
-          address: contractAddress as Address,
-          abi: Organization,
-          functionName: "getTotalVotesByOption",
-          args: [BigInt(i), 2],
-        });
-
-        const abstainVotes = await viemClient.readContract({
-          address: contractAddress as Address,
-          abi: Organization,
-          functionName: "getTotalVotesByOption",
-          args: [BigInt(i), 0],
-        });
-
-        const totalVotes = await viemClient.readContract({
-          address: contractAddress as Address,
-          abi: Organization,
-          functionName: "totalVotes",
-          args: [BigInt(i)],
-        });
-
+        const [yesVotes, noVotes, abstainVotes, totalVotes] = await Promise.all([
+          viemClient.readContract({
+            address: contractAddress as Address,
+            abi: Organization,
+            functionName: "getTotalVotesByOption",
+            args: [BigInt(i), 1], // Yes votes
+          }),
+          viemClient.readContract({
+            address: contractAddress as Address,
+            abi: Organization,
+            functionName: "getTotalVotesByOption",
+            args: [BigInt(i), 2], // No votes
+          }),
+          viemClient.readContract({
+            address: contractAddress as Address,
+            abi: Organization,
+            functionName: "getTotalVotesByOption",
+            args: [BigInt(i), 0], // Abstain votes
+          }),
+          viemClient.readContract({
+            address: contractAddress as Address,
+            abi: Organization,
+            functionName: "totalVotes",
+            args: [BigInt(i)],
+          }),
+        ]);
+  
         const normalizeVote = (rawVotes: any) => {
           return sessions[i]?.oneVotePerUser ? Number(rawVotes) : Number(rawVotes) / 10 ** 18;
         };
-
+  
         const normalizedYesVotes = normalizeVote(yesVotes);
         const normalizedNoVotes = normalizeVote(noVotes);
         const normalizedAbstainVotes = normalizeVote(abstainVotes);
-        const normalizedTotalVotes = normalizeVote(totalVotes);
-
+        const normalizedTotalVotes = normalizeVote(totalVotes); // Normalize total votes
+  
         resultsData.push({
           sessionId: i,
           title: sessions[i].description,
           votedYes: normalizedYesVotes,
           votedNo: normalizedNoVotes,
           votedAbstain: normalizedAbstainVotes,
-          totalVoters: normalizedTotalVotes,
-          deadline: sessions[i].deadline
+          totalVoters: normalizedTotalVotes, // Correctly normalized total votes
+          createdAt: sessions[i].creationTime,
+          deadline: sessions[i].deadline,
         });
-
       }
-      console.log(sessions[0].deadline)
-      console.log(typeof sessions[0].deadline)
       setResults(resultsData);
     } catch (error) {
       console.error("Error fetching voting results:", error);
@@ -249,11 +240,10 @@ export default function OrganizationDashboard() {
   };
 
   const handleFetchSessions = async () => {
-    const maxSessions = 50;
     const sessionData = [];
 
     try {
-      for (let i = 0; i < maxSessions; i++) {
+      for (let i = 0; i < 500; i++) {
         try {
           const session = await viemClient.readContract({
             address: contractAddress as Address,
@@ -262,14 +252,14 @@ export default function OrganizationDashboard() {
             args: [BigInt(i)], // Pass index as BigInt
           });
 
-          // Destructure the tuple
-          const [description, deadline, oneVotePerUser] = session;
+          const [description, deadline, oneVotePerUser, creationTime] = session;
 
           sessionData.push({
             id: i,
             description,
             deadline: Number(deadline),
             oneVotePerUser,
+            creationTime: Number(creationTime),
             status: Number(deadline) > Math.floor(Date.now() / 1000) ? "Active" : "Expired",
           });
         } catch (error) {
@@ -302,7 +292,6 @@ export default function OrganizationDashboard() {
     }
   };
 
-
   // Fetch organization details based on the contract address
   useEffect(() => {
     fetchOrganizationDetails();
@@ -331,12 +320,6 @@ export default function OrganizationDashboard() {
         address,
         abi: Organization,
         functionName: "token",
-      });
-
-      let adminList = await viemClient.readContract({
-        address,
-        abi: Organization,
-        functionName: "getAdmins",
       });
 
       const filteredAdminList = (adminList as string[]).filter(
@@ -377,7 +360,7 @@ export default function OrganizationDashboard() {
 
   const handleRemoveAdmin = async (admin: string) => {
     try {
-      setIsRemovingAdmin(admin);
+      setIsRemovingAdmin(true);
       const address = contractAddress as Address;
       const { request } = await viemClient.simulateContract({
         account: selectedWallet as Address,
@@ -386,13 +369,14 @@ export default function OrganizationDashboard() {
         functionName: "removeAdmin",
         args: [admin as Address],
       });
-      const hash = await walletClient.writeContract(request)
-      setHash(hash)
+      const hash = await walletClient.writeContract(request);
+      setHash(hash);
+      setNewAdmin(""); // Clear the input field after success
     } catch (error: any) {
       console.error("Error removing admin:", error);
       alert(`Failed to remove admin: ${error.message}`);
     } finally {
-      setIsRemovingAdmin(null);
+      setIsRemovingAdmin(false);
     }
   };
 
@@ -409,20 +393,20 @@ export default function OrganizationDashboard() {
         onSelectWallet={handleSelectWallet}
       />
 
-      <Tabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
-      <div className="pt-16 px-4" style={{ marginTop: "-40px" }}>
+      <Tabs organisationName={organizationName} activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+      <div className="pt-16 px-4 " style={{ marginTop: "-40px" }}>
         {activeTab === "currentVoting" && (
           <>
             {loading && <p>Loading voting sessions...</p>}
-            <div className="mt-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
               {sessions.length > 0 ? (
                 sessions.map((session) => {
-                  const votingStatus = votingStatuses.find((s) => s.sessionId === session.id); // Assume votingStatuses is fetched from the contract
+                  const votingStatus = votingStatuses.find((s) => s.sessionId === session.id);
                   return (
                     <VotingInstanceCard
                       key={session.id}
                       instance={session}
-                      hasVoted={votingStatus?.hasVoted || false} // Default to false if not found
+                      hasVoted={votingStatus?.hasVoted || false}
                       onClick={() => {
                         setSelectedInstance(session.id);
                         setShowModal(true);
@@ -438,15 +422,7 @@ export default function OrganizationDashboard() {
         )}
         {activeTab === "votingResults" && (
           <div>
-            <h2 className="text-2xl font-bold mb-4">Voting Results</h2>
-            <button
-              onClick={fetchVotingResults}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-            >
-              Refresh Results
-            </button>
-
-            <div className="mt-6">
+            <div className="mt-6 grid md:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
               {results.length > 0 ? (
                 results.map((result) => (
                   <VotingResultsCard
@@ -459,6 +435,7 @@ export default function OrganizationDashboard() {
                       votedAbstain: result.votedAbstain,
                       totalVoters: result.totalVoters,
                       deadline: result.deadline,
+                      createdAt: result.createdAt,
                     }}
                   />
                 ))
@@ -470,8 +447,8 @@ export default function OrganizationDashboard() {
         )}
 
         {activeTab === "orgSettings" && (
-          <div className="bg-gray-800 text-white p-6 rounded-lg shadow-lg w-full max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold mb-4 text-center border-b border-gray-700 pb-2">Organisation Settings</h2>
+          <div className=" text-white shadow-lg mx-auto">
+            <h2>Organisation Settings</h2>
 
             {/* Contract Details */}
             <div className="space-y-3">
@@ -493,53 +470,51 @@ export default function OrganizationDashboard() {
               </p>
             </div>
 
-            {/* Admins Section */}
-            <div className="mt-6">
-              <h3 className="text-2xl font-bold mb-3">Admins</h3>
-              {adminList.length > 0 ? (
-                <ul className="divide-y divide-gray-700">
-                  {adminList.map((admin) => (
-                    <li key={admin} className="flex items-center justify-between py-2">
-                      <span className="text-gray-300">{admin}</span>
-                      <button
-                        onClick={() => handleRemoveAdmin(admin)}
-                        className={`px-4 py-1 rounded text-sm ${isRemovingAdmin === admin
-                            ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                            : "bg-red-500 hover:bg-red-600"
-                          }`}
-                        disabled={isRemovingAdmin === admin}
-                      >
-                        {isRemovingAdmin === admin ? "Removing..." : "Remove"}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-gray-400">No admins found.</p>
-              )}
-            </div>
-
             {/* Add Admin Section */}
-            <div className="mt-6 bg-gray-700 p-4 rounded-lg">
-              <h3 className="text-xl font-bold mb-2 text-center">Add Admin</h3>
+            <div className="mt-6">
+              <h3 className="text-lg font-semibold mb-2">Add Admin</h3>
               <input
                 type="text"
-                placeholder="Enter admin address"
-                value={newAdmin}
-                onChange={(e) => setNewAdmin(e.target.value)}
+                placeholder="Enter admin address to add"
+                value={addAdminInput}
+                onChange={(e) => setAddAdminInput(e.target.value)}
                 className="w-full p-2 border border-gray-600 rounded mb-3 bg-gray-900 text-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none"
               />
               <button
-                onClick={handleAddAdmin}
+                onClick={() => handleAddAdmin()}
                 className={`w-full px-4 py-2 rounded text-sm font-bold ${isAddingAdmin
-                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                    : "bg-blue-500 hover:bg-blue-600"
+                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
                   }`}
                 disabled={isAddingAdmin}
               >
                 {isAddingAdmin ? "Adding..." : "Add Admin"}
               </button>
             </div>
+
+            {/* Remove Admin Section */}
+            <div className="mb-4">
+              <h4 className="text-lg font-semibold mb-2">Remove Admin</h4>
+              <input
+                type="text"
+                placeholder="Enter admin address to remove"
+                value={removeAdminInput}
+                onChange={(e) => setRemoveAdminInput(e.target.value)}
+                className="w-full p-2 border border-gray-600 rounded mb-3 bg-gray-900 text-gray-300 focus:ring-2 focus:ring-red-400 focus:outline-none"
+              />
+              <button
+                onClick={() => handleRemoveAdmin(removeAdminInput)}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${isRemovingAdmin
+                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                  : "bg-red-500 hover:bg-red-600"
+                  }`}
+                disabled={isRemovingAdmin}
+              >
+                {isRemovingAdmin ? "Removing..." : "Remove Admin"}
+              </button>
+            </div>
+
+
           </div>
         )}
 

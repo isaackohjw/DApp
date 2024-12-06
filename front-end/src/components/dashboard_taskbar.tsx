@@ -36,11 +36,11 @@ export const Tabs: React.FC<TabsProps> = ({
   organisationName,
 }) => {
   return (
-    <div className="mt-20 bg-gray-900 z-10">
+    <div className="mt-16 bg-gray-900 z-10">
       <div className="flex justify-between items-center px-6">
         {/* Organisation Name + Dashboard */}
         <div className="text-white text-lg font-bold ml-4">
-          {organisationName} Dashboard
+          {organisationName}&apos;s Dashboard
         </div>
         {/* Tabs Section */}
         <div className="flex space-x-4 mr-4">

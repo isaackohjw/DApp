@@ -5,7 +5,7 @@ export type Role = "Voter" | "Admin" | "Owner";
 export const roleColors: { [key in Role]: string } = {
   Owner: "bg-red-600",
   Admin: "bg-blue-600",
-  Voter: "bg-orange-600",
+  Voter: "bg-yellow-600",
 };
 
 // Enum for voting status

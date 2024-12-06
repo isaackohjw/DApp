@@ -1,14 +1,14 @@
 'use client';
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface VotingInstanceCardProps {
   instance: {
     id: number;
     description: string;
-    deadline: number; // UNIX timestamp
+    deadline: number;
     oneVotePerUser: boolean;
-    status: string; // "Open", "Closed", "Suspended"
+    creationTime: number;
   };
   hasVoted: boolean; // Whether the user has voted
   onClick: () => void; // Callback for when the card is clicked
@@ -19,11 +19,63 @@ export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
   hasVoted,
   onClick,
 }) => {
-  const { id, description, deadline, oneVotePerUser, status } = instance;
+  const { id, description, deadline, oneVotePerUser, creationTime } = instance;
+
+  const [status, setStatus] = useState<string>(""); // Track status
+  const [timeLeft, setTimeLeft] = useState<string>(""); // Track time left
+  const formattedCreationTime = new Date(creationTime * 1000).toLocaleString();
+
+  // Calculate and update the status dynamically
+  useEffect(() => {
+    const updateStatus = () => {
+      const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+      if (currentTime < deadline) {
+        setStatus("Open");
+      } else {
+        setStatus("Closed");
+      }
+    };
+
+    updateStatus(); // Initial status calculation
+
+    // Refresh status every second
+    const interval = setInterval(updateStatus, 1000);
+
+    return () => clearInterval(interval); // Cleanup on component unmount
+  }, [deadline]);
+
+  // Calculate and update the countdown timer dynamically
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const now = Math.floor(Date.now() / 1000); // Current time in seconds
+      const diff = deadline - now; // Difference in seconds
+
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+        return;
+      }
+
+      const days = Math.floor(diff / (60 * 60 * 24));
+      const hours = Math.floor((diff % (60 * 60 * 24)) / (60 * 60));
+      const minutes = Math.floor((diff % (60 * 60)) / 60);
+      const seconds = diff % 60;
+
+      setTimeLeft(
+        `${days > 0 ? `${days}d ` : ""}${hours > 0 ? `${hours}h ` : ""}${minutes > 0 ? `${minutes}m ` : ""
+        }${seconds}s`
+      );
+    };
+
+    calculateTimeLeft(); // Initial calculation
+
+    const interval = setInterval(calculateTimeLeft, 1000); // Update every second
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [deadline]);
 
   return (
     <div
-      className="bg-gray-800 text-white p-4 rounded-md shadow-md mb-6 border border-gray-700 relative hover:bg-gray-700 hover:scale-105 transform transition-all duration-300 cursor-pointer"
+      className="w-full bg-gray-800 text-white p-4 rounded-md shadow-md border border-gray-700 relative hover:bg-gray-700 hover:scale-105 transform transition-all duration-300 cursor-pointer"
       onClick={onClick}
     >
       {/* Description */}
@@ -36,37 +88,40 @@ export const VotingInstanceCard: React.FC<VotingInstanceCardProps> = ({
 
       {/* Status */}
       <div
-        className={`flex justify-center items-center px-2 py-1 rounded-full text-sm font-semibold mb-4 bg-opacity-60 border border-gray-700 ${
-          getStatusStyles(status).bg
-        }`}
+        className={`flex justify-center items-center px-2 py-1 rounded-full text-sm font-semibold mb-4 bg-opacity-60 border border-gray-700 ${getStatusStyles(status).bg
+          }`}
       >
         <span className={getStatusStyles(status).text}>{status}</span>
       </div>
 
-      {/* Deadline */}
+      {/* Countdown */}
       <div className="flex justify-center items-center mb-4">
         <span className="px-4 py-1 rounded-md text-blue-500 bg-blue-900 bg-opacity-70 text-sm font-medium">
-          Deadline: {new Date(deadline * 1000).toLocaleString()}
+          {timeLeft === "Expired" ? "Deadline Expired" : `Time Left: ${timeLeft}`}
         </span>
       </div>
 
       {/* Voting Rules */}
       <div className="flex justify-center items-center text-sm text-gray-400 mb-4">
-        {oneVotePerUser ? "One vote per user" : "Multiple votes allowed"}
+        {oneVotePerUser ? "Single vote" : "Weighted"}
       </div>
 
       {/* Voting Status */}
-      <div className="flex justify-center items-center text-sm font-bold mb-4">
+      <div className="absolute bottom-1 right-2 px-2 py-1 rounded text-base">
         {hasVoted ? (
-          <span className="text-green-500">Already Voted</span>
+          <div className="bg-green-900 bg-opacity-70 text-white px-2 py-1 rounded-lg font-semibold">
+            Already Voted
+          </div>
         ) : (
-          <span className="text-red-500">Not Voted Yet</span>
+          <div className="bg-red-900 bg-opacity-70 text-white px-2 py-1 rounded-lg font-semibold">
+            Not Voted Yet
+          </div>
         )}
       </div>
 
       {/* ID */}
       <div className="absolute bottom-1 left-2 text-xs text-gray-500">
-        Session ID: {id}
+        Created: {formattedCreationTime}
       </div>
     </div>
   );

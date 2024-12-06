@@ -1,6 +1,24 @@
 export const OrganizationFactory = 
 [
 	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "address",
+				"name": "ercToken",
+				"type": "address"
+			}
+		],
+		"name": "createOrganization",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -18,24 +36,6 @@ export const OrganizationFactory =
 		],
 		"name": "OrganizationCreated",
 		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "name",
-				"type": "string"
-			},
-			{
-				"internalType": "address",
-				"name": "ercToken",
-				"type": "address"
-			}
-		],
-		"name": "createOrganization",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
 	},
 	{
 		"inputs": [],

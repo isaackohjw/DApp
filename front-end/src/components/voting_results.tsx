@@ -8,7 +8,8 @@ export interface VotingInstance {
   votedNo: number;
   votedAbstain: number;
   totalVoters: number;
-  deadline: number; // In seconds
+  deadline: number;
+  createdAt: number;
 }
 
 interface VotingResultsCardProps {
@@ -33,7 +34,7 @@ export const VotingResultsCard: React.FC<VotingResultsCardProps> = ({
       
 
   return (
-    <div className="bg-gray-800 text-white p-3 rounded-md mb-6 shadow-lg border border-gray-700 relative w-64 hover:bg-gray-700 hover:scale-105 transform transition-all duration-300">
+    <div className="w-full bg-gray-800 text-white p-3 rounded-md mb-6 shadow-lg border border-gray-700 relative hover:bg-gray-700 hover:scale-105 transform transition-all duration-300">
       {/* Title */}
       <h3 className="text-lg font-bold mb-3 text-center">{instance.title}</h3>
 
@@ -98,10 +99,10 @@ export const VotingResultsCard: React.FC<VotingResultsCardProps> = ({
 
       {/* Dates */}
       <div className="text-xs text-gray-500 space-y-1">
-        {/* <div>
+        <div>
           {VOTING_RESULTS.CREATED_LABEL}:{" "}
-          {new Date(instance.createdAt).toLocaleDateString()}
-        </div> */}
+          {new Date(instance.createdAt*1000).toLocaleString()}
+        </div>
         <div>
           {VOTING_RESULTS.CLOSED_LABEL}:{" "}
           {new Date(instance.deadline*1000).toLocaleString()}
