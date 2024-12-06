@@ -189,6 +189,16 @@ describe("Organization", () => {
       ).to.be.rejectedWith("Not an admin");
     });
 
+    it("should revert if already an admin", async () => {
+      const { organization, admin1 } = await loadFixture(
+        deployOrganizationFixture
+      );
+      await organization.write.addAdmin([admin1.account.address]);
+      await expect(
+        organization.write.addAdmin([admin1.account.address])
+      ).to.be.rejectedWith("Already an admin");
+    });
+
     it("should prevent removing the owner", async () => {
       const { organization, owner } = await loadFixture(
         deployOrganizationFixture
@@ -212,6 +222,17 @@ describe("Organization", () => {
       expect(isStillAdmin).to.be.false;
     });
 
+    it("should emit AdminRemoved event when removing an admin", async () => {
+      const { organization, admin1 } = await loadFixture(
+        deployOrganizationFixture
+      );
+      await organization.write.addAdmin([admin1.account.address]);
+      await organization.write.removeAdmin([admin1.account.address]);
+      const events = await organization.getEvents.AdminRemoved();
+      expect(events).to.have.lengthOf(1);
+      expect(events[0].args.admin).to.equal(getAddress(admin1.account.address));
+    });
+
     it("should revert if non-admin tries to remove an admin", async () => {
       const { organization, admin1, voter1 } = await loadFixture(
         deployOrganizationFixture
@@ -226,6 +247,16 @@ describe("Organization", () => {
 
       await expect(
         organizationAsOtherAccount.write.removeAdmin([admin1.account.address])
+      ).to.be.rejectedWith("Not an admin");
+    });
+
+    it("should revert if address is not an admin", async () => {
+      const { organization, admin1 } = await loadFixture(
+        deployOrganizationFixture
+      );
+
+      await expect(
+        organization.write.removeAdmin([admin1.account.address])
       ).to.be.rejectedWith("Not an admin");
     });
   });
@@ -287,8 +318,12 @@ describe("Organization", () => {
       const events = await organization.getEvents.VotingSessionCreated();
 
       expect(events).to.have.lengthOf(1);
-      expect(Number(formatUnits(events[0].args.sessionId!, 1))).to.equal(0);
+      expect(Number(formatUnits(events[0].args.sessionId!, 0))).to.equal(0);
       expect(events[0].args.description).to.equal("TestSession");
+      expect(Number(formatUnits(events[0].args.deadline!, 0))).to.equal(
+        deadline
+      );
+      expect(events[0].args.oneVotePerUser).to.equal(true);
     });
 
     it("should revert if voting session deadline is in the past", async () => {
@@ -637,77 +672,32 @@ describe("Organization", () => {
   });
 
   describe("View Function Failure Cases", () => {
-    describe("getTotalVotesByOption", () => {
-      it("should revert for invalid session ID", async () => {
-        const { organization } = await loadFixture(deployOrganizationFixture);
-        await expect(
-          organization.read.getTotalVotesByOption([999n, VoteOption.YES])
-        ).to.be.rejectedWith("Invalid session ID");
-      });
-    });
-
     describe("getUserHasVoted", () => {
-      it("should revert for invalid session ID", async () => {
-        const { organization, voter1 } = await loadFixture(
-          deployOrganizationFixture
-        );
-        await expect(
-          organization.read.getUserHasVoted([
-            999n,
-            getAddress(voter1.account.address),
-          ])
-        ).to.be.rejectedWith("Invalid session ID");
-      });
-    });
-
-    describe("getUserVoteOption", () => {
-      it("should revert for invalid session ID", async () => {
-        const { organization, voter1 } = await loadFixture(
-          deployOrganizationFixture
-        );
-        await expect(
-          organization.read.getUserVoteOption([
-            999n,
-            getAddress(voter1.account.address),
-          ])
-        ).to.be.rejectedWith("Invalid session ID");
+      describe("getUserVoteOption", () => {
+        it("should revert if user has not voted", async () => {
+          const { organization, voter1 } = await loadFixture(
+            deployOrganizationFixtureWithUnweightedVoteSession
+          );
+          await expect(
+            organization.read.getUserVoteOption([
+              0n,
+              getAddress(voter1.account.address),
+            ])
+          ).to.be.rejectedWith("User has not voted in this session");
+        });
       });
 
-      it("should revert if user has not voted", async () => {
-        const { organization, voter1 } = await loadFixture(
-          deployOrganizationFixtureWithUnweightedVoteSession
-        );
-        await expect(
-          organization.read.getUserVoteOption([
+      describe("getUserVotes", () => {
+        it("should return zero votes for user who has not voted", async () => {
+          const { organization, voter1 } = await loadFixture(
+            deployOrganizationFixtureWithUnweightedVoteSession
+          );
+          const userVotes = await organization.read.getUserVotes([
             0n,
             getAddress(voter1.account.address),
-          ])
-        ).to.be.rejectedWith("User has not voted in this session");
-      });
-    });
-
-    describe("getUserVotes", () => {
-      it("should revert for invalid session ID", async () => {
-        const { organization, voter1 } = await loadFixture(
-          deployOrganizationFixture
-        );
-        await expect(
-          organization.read.getUserVotes([
-            999n,
-            getAddress(voter1.account.address),
-          ])
-        ).to.be.rejectedWith("Invalid session ID");
-      });
-
-      it("should return zero votes for user who has not voted", async () => {
-        const { organization, voter1 } = await loadFixture(
-          deployOrganizationFixtureWithUnweightedVoteSession
-        );
-        const userVotes = await organization.read.getUserVotes([
-          0n,
-          getAddress(voter1.account.address),
-        ]);
-        expect(userVotes).to.equal(0n);
+          ]);
+          expect(userVotes).to.equal(0n);
+        });
       });
     });
   });

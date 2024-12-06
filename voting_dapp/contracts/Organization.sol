@@ -15,8 +15,8 @@ contract Organization {
     }
 
     mapping(address => bool) public admins; // Map admin addresses
-    address[] public adminList; // List of admin addresses
     VotingSession[] public votingSessions; // Store all voting sessions
+
     mapping(uint256 => mapping(address => VoteOption)) public voteOptions; // sessionId -> user -> vote option
     mapping(uint256 => mapping(address => bool)) public hasVoted; // sessionId -> user -> has voted
     mapping(uint256 => mapping(VoteOption => uint256)) public totalVotesByOption; // sessionId -> vote option -> total votes
@@ -24,12 +24,15 @@ contract Organization {
     mapping(uint256 => mapping(address => uint256)) public userVotes; // sessionId -> user -> number of votes
 
     event AdminAdded(address indexed admin);
-    event VotingSessionCreated(uint256 indexed sessionId, string description);
+    event AdminRemoved(address indexed admin);
+
+    event VotingSessionCreated(uint256 indexed sessionId, string description, uint256 deadline, bool oneVotePerUser, uint256 creationTime);
 
     struct VotingSession {
         string description;
         uint256 deadline;
         bool oneVotePerUser;
+        uint256 creationTime;
     }
 
     modifier onlyAdmin() {
@@ -46,33 +49,18 @@ contract Organization {
         owner = _owner;
         token = _token;
         admins[_owner] = true;
-        adminList.push(_owner); // Add owner to admin list
     }
 
     function addAdmin(address admin) public onlyAdmin {
         require(!admins[admin], "Already an admin");
         admins[admin] = true;
-        adminList.push(admin); // Add to admin list
         emit AdminAdded(admin);
     }
-
-    function getAdmins() public view returns (address[] memory) {
-        return adminList;
-    }
-
     function removeAdmin(address admin) public onlyAdmin {
         require(admin != owner, "Cannot remove owner");
         require(admins[admin], "Not an admin");
         admins[admin] = false;
-
-        // Remove from admin list
-        for (uint256 i = 0; i < adminList.length; i++) {
-            if (adminList[i] == admin) {
-                adminList[i] = adminList[adminList.length - 1];
-                adminList.pop();
-                break;
-            }
-        }
+        emit AdminRemoved(admin);
     }
 
     function createVotingSession(
@@ -81,8 +69,8 @@ contract Organization {
         bool oneVotePerUser
     ) public onlyAdmin {
         require(deadline > block.timestamp, "Invalid deadline");
-        votingSessions.push(VotingSession(description, deadline, oneVotePerUser));
-        emit VotingSessionCreated(votingSessions.length - 1, description);
+        votingSessions.push(VotingSession(description, deadline, oneVotePerUser, block.timestamp));
+        emit VotingSessionCreated(votingSessions.length - 1, description, deadline, oneVotePerUser, block.timestamp);
     }
 
     function vote(uint256 sessionId, VoteOption option) public {
