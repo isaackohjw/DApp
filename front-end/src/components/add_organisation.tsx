@@ -4,10 +4,7 @@ import { ConfirmationModal } from "./confirmation_modal";
 
 interface AddOrganisationProps {
   onClose: () => void;
-  onCreate: (data: {
-    name: string;
-    tokenAddress: string;
-  }) => void;
+  onCreate: (data: { name: string; tokenAddress: string }) => void;
   prefillData?: {
     name?: string;
     tokenAddress?: string;
@@ -20,12 +17,15 @@ export const AddOrganisation: React.FC<AddOrganisationProps> = ({
   prefillData = {},
 }) => {
   const [name, setName] = useState(prefillData.name || "");
-  const [tokenAddress, setTokenAddress] = useState(prefillData.tokenAddress || "");
+  const [tokenAddress, setTokenAddress] = useState(
+    prefillData.tokenAddress || ""
+  );
   const [isDirty, setIsDirty] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const isAnyFieldFilled = Boolean(name.trim()) || Boolean(tokenAddress.trim());
+    const isAnyFieldFilled =
+      Boolean(name.trim()) || Boolean(tokenAddress.trim());
     setIsDirty(isAnyFieldFilled);
   }, [name, tokenAddress]);
 
@@ -59,7 +59,7 @@ export const AddOrganisation: React.FC<AddOrganisationProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 font-body">
       <div className="bg-gray-800 text-white p-8 rounded-lg w-96">
         {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">

@@ -1,7 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import {
-  createPublicClient, createWalletClient, http, Address, custom, type Hash,
+  createPublicClient,
+  createWalletClient,
+  http,
+  Address,
+  custom,
+  type Hash,
   type TransactionReceipt,
 } from "viem";
 import { VotingInstanceCard } from "@/components/voting_instance";
@@ -19,12 +24,21 @@ export default function OrganizationDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const pathname = usePathname();
   const [sessions, setSessions] = useState<
-    { id: number; description: string; deadline: number; oneVotePerUser: boolean; status: string, creationTime: number; }[]
+    {
+      id: number;
+      description: string;
+      deadline: number;
+      oneVotePerUser: boolean;
+      status: string;
+      creationTime: number;
+    }[]
   >([]);
   const [wallets, setWallets] = useState<string[]>([]);
   const [contractAddress, setContractAddress] = useState<string>("");
-  const [organizationName, setOrganizationName] = useState<string>("Loading...");
-  const [organizationToken, setOrganizationToken] = useState<string>("Loading...");
+  const [organizationName, setOrganizationName] =
+    useState<string>("Loading...");
+  const [organizationToken, setOrganizationToken] =
+    useState<string>("Loading...");
   const [owner, setOwner] = useState<string>("Loading...");
   const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
   const [adminList, setAdminList] = useState<string[]>([]);
@@ -35,14 +49,22 @@ export default function OrganizationDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [hash, setHash] = useState<Hash>()
-  const [receipt, setReceipt] = useState<TransactionReceipt>()
+  const [hash, setHash] = useState<Hash>();
+  const [receipt, setReceipt] = useState<TransactionReceipt>();
   const handleOpenModal = () => setIsModalOpen(true);
-  const handleCloseModal = () => setIsModalOpen(false)
+  const handleCloseModal = () => setIsModalOpen(false);
   const [showModal, setShowModal] = useState(false);
   const [selectedInstance, setSelectedInstance] = useState<number | null>(null);
   const [results, setResults] = useState<
-    { sessionId: number; title: string; votedYes: number; votedNo: number; votedAbstain: number; totalVoters: number; deadline: number }[]
+    {
+      sessionId: number;
+      title: string;
+      votedYes: number;
+      votedNo: number;
+      votedAbstain: number;
+      totalVoters: number;
+      deadline: number;
+    }[]
   >([]);
 
   const [votingStatuses, setVotingStatuses] = useState<
@@ -114,7 +136,7 @@ export default function OrganizationDashboard() {
           const receipt = await viemClient.waitForTransactionReceipt({ hash });
           setReceipt(receipt);
           console.log(receipt);
-          if (receipt.status === 'success') {
+          if (receipt.status === "success") {
             fetchOrganizationDetails();
           } else {
             alert("Failed operation. Transaction reverted.");
@@ -159,7 +181,9 @@ export default function OrganizationDashboard() {
     try {
       const { description, deadline, oneVotePerUser } = formData;
 
-      const deadlineTimestamp = BigInt(Math.floor(new Date(deadline).getTime() / 1000));
+      const deadlineTimestamp = BigInt(
+        Math.floor(new Date(deadline).getTime() / 1000)
+      );
 
       const { request } = await viemClient.simulateContract({
         address: contractAddress as Address,
@@ -184,7 +208,6 @@ export default function OrganizationDashboard() {
     }
   };
 
-
   const viemClient = createPublicClient({
     chain: holesky,
     transport: http(),
@@ -202,35 +225,39 @@ export default function OrganizationDashboard() {
     try {
       const resultsData = [];
       for (let i = 0; i < sessions.length; i++) {
-        const [yesVotes, noVotes, abstainVotes, totalVotes] = await Promise.all([
-          viemClient.readContract({
-            address: contractAddress as Address,
-            abi: Organization,
-            functionName: "getTotalVotesByOption",
-            args: [BigInt(i), 1], // Yes votes
-          }),
-          viemClient.readContract({
-            address: contractAddress as Address,
-            abi: Organization,
-            functionName: "getTotalVotesByOption",
-            args: [BigInt(i), 2], // No votes
-          }),
-          viemClient.readContract({
-            address: contractAddress as Address,
-            abi: Organization,
-            functionName: "getTotalVotesByOption",
-            args: [BigInt(i), 0], // Abstain votes
-          }),
-          viemClient.readContract({
-            address: contractAddress as Address,
-            abi: Organization,
-            functionName: "totalVotes",
-            args: [BigInt(i)],
-          }),
-        ]);
+        const [yesVotes, noVotes, abstainVotes, totalVotes] = await Promise.all(
+          [
+            viemClient.readContract({
+              address: contractAddress as Address,
+              abi: Organization,
+              functionName: "getTotalVotesByOption",
+              args: [BigInt(i), 1], // Yes votes
+            }),
+            viemClient.readContract({
+              address: contractAddress as Address,
+              abi: Organization,
+              functionName: "getTotalVotesByOption",
+              args: [BigInt(i), 2], // No votes
+            }),
+            viemClient.readContract({
+              address: contractAddress as Address,
+              abi: Organization,
+              functionName: "getTotalVotesByOption",
+              args: [BigInt(i), 0], // Abstain votes
+            }),
+            viemClient.readContract({
+              address: contractAddress as Address,
+              abi: Organization,
+              functionName: "totalVotes",
+              args: [BigInt(i)],
+            }),
+          ]
+        );
 
         const normalizeVote = (rawVotes: any) => {
-          return sessions[i]?.oneVotePerUser ? Number(rawVotes) : Number(rawVotes) / 10 ** 18;
+          return sessions[i]?.oneVotePerUser
+            ? Number(rawVotes)
+            : Number(rawVotes) / 10 ** 18;
         };
 
         const normalizedYesVotes = normalizeVote(yesVotes);
@@ -264,7 +291,7 @@ export default function OrganizationDashboard() {
         functionName: "getVotingSessionCount",
         args: [],
       });
-      
+
       for (let i = 0; i < sessionCount; i++) {
         try {
           const session = await viemClient.readContract({
@@ -282,7 +309,10 @@ export default function OrganizationDashboard() {
             deadline: Number(deadline),
             oneVotePerUser,
             creationTime: Number(creationTime),
-            status: Number(deadline) > Math.floor(Date.now() / 1000) ? "Active" : "Expired",
+            status:
+              Number(deadline) > Math.floor(Date.now() / 1000)
+                ? "Active"
+                : "Expired",
           });
         } catch (error) {
           console.log(`No more sessions found at index ${i}.`);
@@ -294,7 +324,6 @@ export default function OrganizationDashboard() {
       console.error("Error fetching voting sessions:", error);
     }
   };
-
 
   const handleSelectWallet = async (wallet: string) => {
     try {
@@ -344,7 +373,7 @@ export default function OrganizationDashboard() {
       });
 
       const filteredAdminList = (adminList as string[]).filter(
-        admin => admin.toLowerCase() !== (owner as string).toLowerCase()
+        (admin) => admin.toLowerCase() !== (owner as string).toLowerCase()
       );
 
       // Set state with string values
@@ -368,8 +397,8 @@ export default function OrganizationDashboard() {
         functionName: "addAdmin",
         args: [addAdminInput as Address],
       });
-      const hash = await walletClient.writeContract(request)
-      setHash(hash)
+      const hash = await walletClient.writeContract(request);
+      setHash(hash);
       setAddAdminInput("");
     } catch (error) {
       console.error("Error adding admin:", error);
@@ -414,7 +443,12 @@ export default function OrganizationDashboard() {
         onSelectWallet={handleSelectWallet}
       />
 
-      <Tabs organisationName={organizationName} activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
+      <Tabs
+        organisationName={organizationName}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        tabs={tabs}
+      />
       <div className="pt-16 px-4 " style={{ marginTop: "-40px" }}>
         {activeTab === "currentVoting" && (
           <>
@@ -422,7 +456,9 @@ export default function OrganizationDashboard() {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
               {sessions.length > 0 ? (
                 sessions.map((session) => {
-                  const votingStatus = votingStatuses.find((s) => s.sessionId === session.id);
+                  const votingStatus = votingStatuses.find(
+                    (s) => s.sessionId === session.id
+                  );
                   return (
                     <VotingInstanceCard
                       key={session.id}
@@ -468,14 +504,16 @@ export default function OrganizationDashboard() {
         )}
 
         {activeTab === "orgSettings" && (
-          <div className=" text-white shadow-lg mx-auto">
+          <div className=" text-white shadow-lg mx-auto font-bold">
             <h2>Organisation Settings</h2>
 
             {/* Contract Details */}
             <div className="space-y-3">
               <p>
                 <strong className="text-blue-400">Contract Address:</strong>
-                <span className="text-gray-300 ml-2">{contractAddress || "N/A"}</span>
+                <span className="text-gray-300 ml-2">
+                  {contractAddress || "N/A"}
+                </span>
               </p>
               <p>
                 <strong className="text-blue-400">Name:</strong>
@@ -503,10 +541,11 @@ export default function OrganizationDashboard() {
               />
               <button
                 onClick={() => handleAddAdmin()}
-                className={`w-full px-4 py-2 rounded text-sm font-bold ${isAddingAdmin
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-                  }`}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  isAddingAdmin
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-blue-500 hover:bg-blue-600"
+                }`}
                 disabled={isAddingAdmin}
               >
                 {isAddingAdmin ? "Adding..." : "Add Admin"}
@@ -525,17 +564,16 @@ export default function OrganizationDashboard() {
               />
               <button
                 onClick={() => handleRemoveAdmin(removeAdminInput)}
-                className={`w-full px-4 py-2 rounded text-sm font-bold ${isRemovingAdmin
-                  ? "bg-gray-400 text-gray-700 cursor-not-allowed"
-                  : "bg-red-500 hover:bg-red-600"
-                  }`}
+                className={`w-full px-4 py-2 rounded text-sm font-bold ${
+                  isRemovingAdmin
+                    ? "bg-gray-400 text-gray-700 cursor-not-allowed"
+                    : "bg-red-500 hover:bg-red-600"
+                }`}
                 disabled={isRemovingAdmin}
               >
                 {isRemovingAdmin ? "Removing..." : "Remove Admin"}
               </button>
             </div>
-
-
           </div>
         )}
 
@@ -567,6 +605,5 @@ export default function OrganizationDashboard() {
         )}
       </div>
     </div>
-
   );
 }
