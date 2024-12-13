@@ -114,10 +114,6 @@ Visit `http://localhost:3000` to interact with the DApp.
 - **Admin Functions**: Admins can create and manage voting sessions, ensuring proper governance.
 - **Results**: View the results after voting sessions conclude.
 
-## Support
-
-For any issues, please contact [Your Support Email] or visit the [GitHub Issues Page](https://github.com/yourusername/voting-dapp/issues).
-
 ## Roadmap
 
 - Implement and test additional voting structures.
