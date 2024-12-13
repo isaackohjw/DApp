@@ -1,6 +1,6 @@
 # Decentralized Voting DApp 
 
-![image](https://github.com/user-attachments/assets/5c2edf33-1440-40e5-a700-9707cf7e6109)
+![Screenshot 2024-12-10 014732](https://github.com/user-attachments/assets/8849440a-80ee-4c8a-864b-bbbbe3e9f071)
 
 ## Description
 
